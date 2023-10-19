@@ -18,7 +18,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import project.eepw.softwaretestingcrud.domain.comment.entity.Comment;
 import project.eepw.softwaretestingcrud.domain.post.entity.Post;
 
 @Entity(name = "users")
@@ -58,13 +57,4 @@ public class User {
 	@EqualsAndHashCode.Exclude
 	@Builder.Default
 	private Set<Post> posts = new HashSet<>();
-
-	@OneToMany(
-		mappedBy = "user",
-		fetch = FetchType.LAZY,
-		cascade = CascadeType.ALL
-	)
-	@EqualsAndHashCode.Exclude
-	@Builder.Default
-	private Set<Comment> comments = new HashSet<>();
 }
