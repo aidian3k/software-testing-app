@@ -1,0 +1,34 @@
+{
+	"info": {
+		"_postman_id": "3d9c43b7-8ff7-46d6-947c-045aed3570f4",
+		"name": "testing-app",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "22680424"
+	},
+	"item": [
+		{
+			"name": "GetUser",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base-localhost}}/api/create-user",
+					"host": [
+						"{{base-localhost}}"
+					],
+					"path": [
+						"api",
+						"create-user"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base-localhost",
+			"value": "localhost:8080"
+		}
+	]
+}

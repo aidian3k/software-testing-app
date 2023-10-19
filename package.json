@@ -1,0 +1,13 @@
+{
+  "name": "software-testing-crud",
+  "version": "0.0.0",
+  "scripts": {
+    "check": "npx prettier --check {**/*,*}.{ts,java,js,html,json}",
+    "format": "npx prettier --write {**/*,*}.{ts,java,js,html,json}"
+  },
+  "devDependencies": {
+    "java-parser": "~2.0.4",
+    "prettier": "~2.8.7",
+    "prettier-plugin-java": "^1.6.2"
+  }
+}
