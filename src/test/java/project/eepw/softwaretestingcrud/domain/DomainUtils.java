@@ -1,14 +1,14 @@
 package project.eepw.softwaretestingcrud.domain;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import project.eepw.softwaretestingcrud.domain.post.entity.Post;
 import project.eepw.softwaretestingcrud.domain.user.entity.User;
 
 import java.util.Collections;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class DomainUtils {
-    private DomainUtils() {
-
-    }
 
     public static Post makePost() {
         return Post.builder()

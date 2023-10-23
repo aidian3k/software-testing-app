@@ -12,7 +12,12 @@ import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import project.eepw.softwaretestingcrud.infrastructure.exception.PostNotFoundException;
 import project.eepw.softwaretestingcrud.infrastructure.exception.UserNotFoundException;
 
-import java.util.*;
+
+import java.util.List;
+import java.util.Set;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
