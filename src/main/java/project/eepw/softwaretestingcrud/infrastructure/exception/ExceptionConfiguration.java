@@ -44,7 +44,7 @@ class ExceptionConfiguration {
 			.stream()
 			.collect(
 				Collectors.toMap(
-					error -> error.getRootBeanClass().getName(),
+					error -> error.getPropertyPath().toString(),
 					ConstraintViolation::getMessage
 				)
 			);
