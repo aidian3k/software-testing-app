@@ -14,6 +14,10 @@ import java.lang.annotation.Target;
 public @interface Password {
 	String message() default "Password does not meet our requirements";
 
+	Class<?>[] groups() default {};
+
+	Class<?>[] payload() default {};
+
 	class PasswordValidator implements ConstraintValidator<Password, String> {
 
 		private String message;
@@ -26,7 +30,7 @@ public @interface Password {
 
 		@Override
 		public boolean isValid(String value, ConstraintValidatorContext context) {
-			if (!value.matches(".{8,}")) {
+			if (value == null || !value.matches(".{8,}")) {
 				context
 					.buildConstraintViolationWithTemplate(message)
 					.addPropertyNode("password");

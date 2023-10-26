@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -19,6 +20,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import project.eepw.softwaretestingcrud.domain.post.entity.Post;
+import project.eepw.softwaretestingcrud.infrastructure.validation.validators.Password;
 
 @Entity(name = "users")
 @AllArgsConstructor
@@ -26,10 +28,12 @@ import project.eepw.softwaretestingcrud.domain.post.entity.Post;
 @Getter
 @Setter
 @Builder(toBuilder = true)
+@EqualsAndHashCode
 public class User {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "users_seq")
+	@SequenceGenerator(name = "users_seq", allocationSize = 1)
 	private Long id;
 
 	@NotNull
@@ -38,7 +42,7 @@ public class User {
 
 	@Email
 	@NotNull
-	@Size(min = 2, max = 6)
+	@Size(min = 2, max = 255)
 	private String email;
 
 	@NotNull
@@ -46,6 +50,7 @@ public class User {
 	private String surname;
 
 	@NotNull
+	@Password
 	@Size(max = 255)
 	private String password;
 

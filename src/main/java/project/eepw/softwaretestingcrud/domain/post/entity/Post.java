@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,7 @@ public class Post {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "posts_seq")
+	@SequenceGenerator(name = "posts_seq", allocationSize = 1)
 	private Long id;
 
 	@NotNull
