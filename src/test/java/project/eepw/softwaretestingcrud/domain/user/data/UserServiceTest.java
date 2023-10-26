@@ -2,6 +2,7 @@ package project.eepw.softwaretestingcrud.domain.user.data;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -209,14 +210,14 @@ class UserServiceTest {
         .surname("Jackson")
         .password("123")
         .build();
-    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.existsById(userId)).thenReturn(true);
     when(userRepository.save(toUpdate)).thenReturn(toUpdate);
 
     //when
     User updatedUser = userService.updateUser(toUpdate);
 
     //then
-    verify(userRepository, times(1)).findById(toUpdate.getId());
+    verify(userRepository, times(1)).existsById(toUpdate.getId());
     verify(userRepository, times(1)).save(toUpdate);
     assertThat(updatedUser)
         .usingRecursiveComparison()
@@ -228,7 +229,7 @@ class UserServiceTest {
     //given
     User notExistingUser = makeUser();
 
-    when(userRepository.findById(notExistingUser.getId())).thenReturn(Optional.empty());
+    when(userRepository.existsById(notExistingUser.getId())).thenReturn(false);
 
     //when
     ThrowingCallable updateUserExecutable = () -> userService.updateUser(notExistingUser);
@@ -237,7 +238,7 @@ class UserServiceTest {
     assertThatThrownBy(updateUserExecutable)
         .isInstanceOf(UserNotFoundException.class)
         .hasMessageContaining("User has not been found!");
-    verify(userRepository, times(1)).findById(notExistingUser.getId());
+    verify(userRepository, times(1)).existsById(notExistingUser.getId());
     verify(userRepository, times(0)).save(notExistingUser);
   }
 
@@ -245,7 +246,6 @@ class UserServiceTest {
   void shouldThrowExceptionOnUpdateWhenGivenUserIsNull() {
     //given
     User nullUser = null;
-    when(userRepository.save(nullUser)).thenThrow(IllegalArgumentException.class);
 
     //when
     ThrowingCallable updateUserExecutable = () -> userService.updateUser(nullUser);
@@ -253,6 +253,7 @@ class UserServiceTest {
     //then
     assertThatThrownBy(updateUserExecutable)
         .isInstanceOf(IllegalArgumentException.class);
+    verify(userRepository, times(0)).existsById(any());
     verify(userRepository, times(0)).save(nullUser);
   }
 
@@ -283,7 +284,7 @@ class UserServiceTest {
     //then
     assertThatThrownBy(deleteUserExecutable)
         .isInstanceOf(UserNotFoundException.class)
-        .hasMessageContaining("User has not been found!");
+        .hasMessageContaining("User has not been found");
     verify(userRepository, times(1)).findById(id);
   }
 
@@ -299,6 +300,5 @@ class UserServiceTest {
     //then
     assertThatThrownBy(deleteUserExecutable)
         .isInstanceOf(IllegalArgumentException.class);
-    verify(userRepository, times(1)).findById(id);
   }
 }
