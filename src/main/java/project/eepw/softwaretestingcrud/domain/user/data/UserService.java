@@ -35,6 +35,12 @@ public class UserService {
 	}
 
 	public User updateUser(User user) {
+		if (user == null) {
+			throw new IllegalArgumentException("User cannot be null!");
+		}
+		if (!userRepository.existsById(user.getId())) {
+			throw new UserNotFoundException("User has not been found!");
+		}
 		return userRepository.save(user);
 	}
 
