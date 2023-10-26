@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  database:
+    image: postgres:latest
+    container_name: postgres_database
+    environment:
+      - POSTGRES_USERNAME=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DATABASE=postgres
+    ports:
+      - "5432:5432"
+  backend:
+    container_name: software-testing-crud
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      database:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"
