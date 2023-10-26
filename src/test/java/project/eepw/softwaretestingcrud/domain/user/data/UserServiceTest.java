@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static project.eepw.softwaretestingcrud.domain.DomainUtils.makeUser;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -299,16 +300,5 @@ class UserServiceTest {
     assertThatThrownBy(deleteUserExecutable)
         .isInstanceOf(IllegalArgumentException.class);
     verify(userRepository, times(1)).findById(id);
-  }
-
-  private User makeUser() {
-    return User.builder()
-        .id(1L)
-        .name("John")
-        .email("john@example.com")
-        .surname("Doe")
-        .password("password")
-        .posts(Collections.emptySet())
-        .build();
   }
 }
