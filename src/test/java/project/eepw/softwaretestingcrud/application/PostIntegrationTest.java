@@ -252,9 +252,9 @@ class PostIntegrationTest {
 	}
 
 	@Nested
-	@DisplayName("Delete users test")
+	@DisplayName("Delete posts test")
 	@Tag("DELETE")
-	class DeleteUserTests {
+	class DeletePostTests {
 
 		@Test
 		void shouldThrowAnExceptionWhenTryingToDeletePostWhichDoesNotExist() {
