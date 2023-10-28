@@ -150,6 +150,12 @@ class PostIntegrationTest {
 
 	}
 
+	@Nested
+	@DisplayName("Get posts test")
+	@Tag("GET")
+	class GetUsersTests {
+
+	}
 	private static User sampleCreateUser() {
 		return User
 				.builder()
