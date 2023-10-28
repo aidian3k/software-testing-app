@@ -1,5 +1,6 @@
 package project.eepw.softwaretestingcrud.domain.post.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -33,6 +34,6 @@ public class Post {
 	@Size(max = 512)
 	private String content;
 
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.EAGER)
 	private User user;
 }

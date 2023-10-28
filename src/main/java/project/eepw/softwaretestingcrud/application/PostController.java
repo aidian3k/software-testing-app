@@ -24,7 +24,7 @@ class PostController {
 
 	private final PostService postService;
 
-	@GetMapping
+	@GetMapping("")
 	public Collection<Post> getAllPosts() {
 		return postService.getAllPosts();
 	}
