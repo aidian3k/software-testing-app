@@ -49,6 +49,104 @@ class PostIntegrationTest {
 			makeUserDeletionRequest(user.getId());
 		}
 
+		@Test
+		void shouldThrowAnExceptionWhenUserPassNullValuesForMandatoryPostField() {
+			// given
+			User createUserDTO = sampleCreateUser();
+			User user = makeUserCreationRequest(createUserDTO);
+			Post createPost = sampleCreatePost(user)
+					.toBuilder()
+					.content(null)
+					.build();
+
+			// when
+			@SuppressWarnings("unchecked")
+			Map<String, String> errorResponse = (Map<String, String>) given()
+					.contentType(MediaType.APPLICATION_JSON_VALUE)
+					.body(createPost)
+					.post(CREATE_POST_URL_WITHOUT_USER_ID + user.getId())
+					.then()
+					.statusCode(HttpStatus.BAD_REQUEST.value())
+					.extract()
+					.as(Map.class);
+
+			// then
+			int expectedErrorsSize = 1;
+
+			assertThat(errorResponse.keySet())
+					.hasSize(expectedErrorsSize)
+					.containsExactlyInAnyOrderElementsOf(Set.of("content"));
+
+			// tear down
+			makeUserDeletionRequest(user.getId());
+		}
+
+		@Test
+		void shouldThrowAnExceptionWhenUserPassTooLongValueForPostContentField() {
+			// given
+			User createUserDTO = sampleCreateUser();
+			User user = makeUserCreationRequest(createUserDTO);
+			Post createPost = sampleCreatePost(user)
+					.toBuilder()
+					.content("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum ultricies placerat quam ut luctus. Etiam fringilla, enim vitae cursus laoreet, diam nisl consectetur nulla, eget tincidunt nunc turpis id orci. Sed feugiat rutrum purus quis luctus. Nulla malesuada posuere sapien, nec aliquam diam varius vel. Maecenas facilisis vel est consectetur tincidunt. In laoreet magna mauris, sit amet tempor nibh tempor eget. Nulla porttitor sodales lectus, a ultricies ipsum euismod blandit. Mauris ullamcorper turpis.")
+					.build();
+
+			// when
+			@SuppressWarnings("unchecked")
+			Map<String, String> errorResponse = (Map<String, String>) given()
+					.contentType(MediaType.APPLICATION_JSON_VALUE)
+					.body(createPost)
+					.post(CREATE_POST_URL_WITHOUT_USER_ID + user.getId())
+					.then()
+					.statusCode(HttpStatus.BAD_REQUEST.value())
+					.extract()
+					.as(Map.class);
+
+			// then
+			int expectedErrorsSize = 1;
+
+			assertThat(errorResponse.keySet())
+					.hasSize(expectedErrorsSize)
+					.containsExactlyInAnyOrderElementsOf(Set.of("content"));
+
+			// tear down
+			makeUserDeletionRequest(user.getId());
+		}
+		@Test
+		void shouldCorrectlyAddMoreThanOnePostToOneUser() {
+			// given
+			User createUserDTO = sampleCreateUser();
+			User user = makeUserCreationRequest(createUserDTO);
+			Post firstPost = sampleCreatePost(user)
+					.toBuilder()
+					.content("Daaawideek")
+					.build();
+
+			Post secondPost = sampleCreatePost(user)
+					.toBuilder()
+					.content("James 1.25 zgłoś się")
+					.build();
+
+			// when
+			Post firstCreatedPost = makePostCreationRequest(firstPost, user.getId());
+			Post secondCreatedPost = makePostCreationRequest(secondPost, user.getId());
+
+			// then
+			Set<String> expectedPostContents = Set.of("Daaawideek", "James 1.25 zgłoś się");
+
+			assertThat(
+					Set.of(firstCreatedPost.getContent(), secondCreatedPost.getContent())
+			)
+					.hasSize(2)
+					.containsExactlyInAnyOrderElementsOf(expectedPostContents);
+
+			// tear down
+			Stream
+					.of(firstCreatedPost.getId(), secondCreatedPost.getId())
+					.forEach(PostIntegrationTest.this::makePostDeletionRequest);
+
+			makeUserDeletionRequest(user.getId());
+		}
 
 	}
 
