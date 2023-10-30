@@ -1,15 +1,5 @@
 package project.eepw.softwaretestingcrud.application;
 
-import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.*;
-import static project.eepw.softwaretestingcrud.IntegrationTestConstants.*;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,9 +11,23 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import project.eepw.softwaretestingcrud.SoftwareTestingCrudApplication;
+import project.eepw.softwaretestingcrud.domain.post.dto.PostCreationDTO;
 import project.eepw.softwaretestingcrud.domain.post.dto.PostDTO;
 import project.eepw.softwaretestingcrud.domain.post.entity.Post;
 import project.eepw.softwaretestingcrud.domain.user.entity.User;
+import project.eepw.softwaretestingcrud.fixtures.UserFixtures;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
+import static project.eepw.softwaretestingcrud.IntegrationTestConstants.CREATE_POST_URL_WITHOUT_USER_ID;
+import static project.eepw.softwaretestingcrud.IntegrationTestConstants.GET_ALL_POSTS_URL;
 
 @SpringBootTest(
 	webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
@@ -35,12 +39,12 @@ class PostIntegrationTest {
 
 	@BeforeEach
 	public void setUp() {
-		this.user = makeUserCreationRequest(sampleCreateUser());
+		this.user = UserFixtures.makeUserCreationRequest(sampleCreateUser());
 	}
 
 	@AfterEach
 	public void tearDown() {
-		makeUserDeletionRequest(user.getId());
+		UserFixtures.makeUserDeletionRequest(user.getId());
 	}
 
 	@Nested
@@ -51,7 +55,7 @@ class PostIntegrationTest {
 		@Test
 		void shouldReturnCorrectPostWhenPostWasJustCreated() {
 			// given
-			PostDTO createPostDTO = sampleCreatePost();
+			PostCreationDTO createPostDTO = sampleCreatePost();
 
 			// when
 			PostDTO post = makePostCreationRequest(createPostDTO, user.getId());
@@ -63,7 +67,10 @@ class PostIntegrationTest {
 		@Test
 		void shouldThrowAnExceptionWhenUserPassNullValuesForMandatoryPostField() {
 			// given
-			PostDTO createPost = sampleCreatePost().toBuilder().content(null).build();
+			PostCreationDTO createPost = sampleCreatePost()
+				.toBuilder()
+				.content(null)
+				.build();
 
 			// when
 			@SuppressWarnings("unchecked")
@@ -94,7 +101,7 @@ class PostIntegrationTest {
 				.mapToObj(element -> "a")
 				.collect(Collectors.joining());
 
-			PostDTO createPost = sampleCreatePost()
+			PostCreationDTO createPost = sampleCreatePost()
 				.toBuilder()
 				.content(wrongLengthContent)
 				.build();
@@ -121,12 +128,12 @@ class PostIntegrationTest {
 		@Test
 		void shouldCorrectlyAddMoreThanOnePostToOneUser() {
 			// given
-			PostDTO firstPost = sampleCreatePost()
+			PostCreationDTO firstPost = sampleCreatePost()
 				.toBuilder()
 				.content("Daaawideek")
 				.build();
 
-			PostDTO secondPost = sampleCreatePost()
+			PostCreationDTO secondPost = sampleCreatePost()
 				.toBuilder()
 				.content("James 1.25 zgłoś się")
 				.build();
@@ -174,7 +181,7 @@ class PostIntegrationTest {
 			List<PostDTO> createdPosts = postContents
 				.stream()
 				.map(postContent -> {
-					PostDTO createdPost = sampleCreatePost()
+					PostCreationDTO createdPost = sampleCreatePost()
 						.toBuilder()
 						.content(String.valueOf(postContent))
 						.build();
@@ -229,7 +236,7 @@ class PostIntegrationTest {
 		@Test
 		void shouldCorrectlyFindPostsByIdWhenPostIsCreated() {
 			// given
-			PostDTO createPost = sampleCreatePost();
+			PostCreationDTO createPost = sampleCreatePost();
 
 			// when
 			PostDTO post = makePostCreationRequest(createPost, user.getId());
@@ -277,7 +284,7 @@ class PostIntegrationTest {
 		@Test
 		void shouldUpdatePostWhenPostIsAlreadyCreated() {
 			// given
-			PostDTO postCreateRequest = sampleCreatePost();
+			PostCreationDTO postCreateRequest = sampleCreatePost();
 			String changedContent = "James 1.25 zgłoś się";
 
 			// when
@@ -313,24 +320,14 @@ class PostIntegrationTest {
 			.build();
 	}
 
-	private static PostDTO sampleCreatePost() {
-		return PostDTO.builder().content("Some content").build();
+	private static PostCreationDTO sampleCreatePost() {
+		return PostCreationDTO.builder().content("Some content").build();
 	}
 
-	private User makeUserCreationRequest(User createUser) {
-		return given()
-			.contentType(MediaType.APPLICATION_JSON_VALUE)
-			.body(createUser)
-			.post(CREATE_USER_URL)
-			.then()
-			.statusCode(HttpStatus.OK.value())
-			.log()
-			.body()
-			.extract()
-			.as(User.class);
-	}
-
-	private PostDTO makePostCreationRequest(PostDTO createPost, Long userId) {
+	private PostDTO makePostCreationRequest(
+		PostCreationDTO createPost,
+		Long userId
+	) {
 		return given()
 			.contentType(MediaType.APPLICATION_JSON_VALUE)
 			.body(createPost)
@@ -341,13 +338,6 @@ class PostIntegrationTest {
 			.body()
 			.extract()
 			.as(PostDTO.class);
-	}
-
-	private void makeUserDeletionRequest(Long userId) {
-		given()
-			.delete(GET_ALL_USERS_URL + "/" + userId)
-			.then()
-			.statusCode(HttpStatus.OK.value());
 	}
 
 	private void makePostDeletionRequest(Long postId) {

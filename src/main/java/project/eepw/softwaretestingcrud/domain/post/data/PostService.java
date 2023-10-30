@@ -1,15 +1,17 @@
 package project.eepw.softwaretestingcrud.domain.post.data;
 
-import java.util.Collection;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import project.eepw.softwaretestingcrud.domain.post.dto.PostCreationDTO;
 import project.eepw.softwaretestingcrud.domain.post.dto.PostDTO;
 import project.eepw.softwaretestingcrud.domain.post.entity.Post;
 import project.eepw.softwaretestingcrud.domain.user.data.UserService;
 import project.eepw.softwaretestingcrud.domain.user.entity.User;
 import project.eepw.softwaretestingcrud.infrastructure.exception.PostNotFoundException;
+
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -43,15 +45,26 @@ public class PostService {
 			.collect(Collectors.toSet());
 	}
 
-	public PostDTO createPost(PostDTO postDTO, Long userId) {
+	public PostDTO createPost(
+		PostCreationDTO postCreationDTO,
+		Long userId
+	) {
 		User user = userService.getUserById(userId);
-		Post post = Post.builder().user(user).content(postDTO.getContent()).build();
+		Post post = Post
+			.builder()
+			.user(user)
+			.content(postCreationDTO.getContent())
+			.build();
 
 		Post createdPost = postRepository.save(post);
 		user.getPosts().add(createdPost);
 		userService.updateUser(user);
 
-		return postDTO.toBuilder().id(createdPost.getId()).build();
+		return PostDTO
+			.builder()
+			.id(createdPost.getId())
+			.content(createdPost.getContent())
+			.build();
 	}
 
 	public PostDTO updatePost(PostDTO modifiedPost, Long userId) {

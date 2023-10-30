@@ -1,6 +1,5 @@
 package project.eepw.softwaretestingcrud.application;
 
-import java.util.Collection;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -13,7 +12,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import project.eepw.softwaretestingcrud.domain.post.data.PostService;
+import project.eepw.softwaretestingcrud.domain.post.dto.PostCreationDTO;
 import project.eepw.softwaretestingcrud.domain.post.dto.PostDTO;
+
+import java.util.Collection;
 
 @RestController
 @RequiredArgsConstructor
@@ -46,10 +48,10 @@ class PostController {
 
 	@PostMapping("/user/{userId}")
 	public PostDTO createPost(
-		@RequestBody PostDTO post,
+		@RequestBody PostCreationDTO postCreationDTO,
 		@PathVariable Long userId
 	) {
-		return postService.createPost(post, userId);
+		return postService.createPost(postCreationDTO, userId);
 	}
 
 	@PutMapping("/user/{userId}")
