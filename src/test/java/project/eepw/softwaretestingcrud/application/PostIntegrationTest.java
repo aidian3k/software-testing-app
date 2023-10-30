@@ -38,12 +38,12 @@ class PostIntegrationTest {
 	private User user;
 
 	@BeforeEach
-	public void setUp() {
+	void setUp() {
 		this.user = UserFixtures.makeUserCreationRequest(sampleCreateUser());
 	}
 
 	@AfterEach
-	public void tearDown() {
+	void tearDown() {
 		UserFixtures.makeUserDeletionRequest(user.getId());
 	}
 
@@ -240,13 +240,13 @@ class PostIntegrationTest {
 
 			// when
 			PostDTO post = makePostCreationRequest(createPost, user.getId());
-			Post getPost = given()
+			PostDTO getPost = given()
 				.get(GET_ALL_POSTS_URL + "/" + post.getId())
 				.then()
 				.statusCode(HttpStatus.OK.value())
 				.and()
 				.extract()
-				.as(Post.class);
+				.as(PostDTO.class);
 
 			// then
 			Assertions.assertAll(
