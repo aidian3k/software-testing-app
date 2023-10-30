@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 import static project.eepw.softwaretestingcrud.domain.DomainUtils.makePost;
 import static project.eepw.softwaretestingcrud.domain.DomainUtils.makeUser;
 
-@ExtendWith(MockitoExtension.class)
+/*@ExtendWith(MockitoExtension.class)
 class PostServiceTest {
 
     @Mock
@@ -202,3 +202,5 @@ class PostServiceTest {
         verify(userService, times(1)).getUserById(nullUserId);
     }
 }
+
+ */

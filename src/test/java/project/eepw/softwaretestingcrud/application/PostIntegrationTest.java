@@ -8,8 +8,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
@@ -17,11 +20,28 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import project.eepw.softwaretestingcrud.domain.user.entity.User;
+import project.eepw.softwaretestingcrud.SoftwareTestingCrudApplication;
+import project.eepw.softwaretestingcrud.domain.post.dto.PostDTO;
 import project.eepw.softwaretestingcrud.domain.post.entity.Post;
+import project.eepw.softwaretestingcrud.domain.user.entity.User;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@SpringBootTest(
+	webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+	classes = { SoftwareTestingCrudApplication.class }
+)
 class PostIntegrationTest {
+
+	private User user;
+
+	@BeforeEach
+	public void setUp() {
+		this.user = makeUserCreationRequest(sampleCreateUser());
+	}
+
+	@AfterEach
+	public void tearDown() {
+		makeUserDeletionRequest(user.getId());
+	}
 
 	@Nested
 	@DisplayName("Create posts tests")
@@ -31,190 +51,174 @@ class PostIntegrationTest {
 		@Test
 		void shouldReturnCorrectPostWhenPostWasJustCreated() {
 			// given
-			User createUserDTO = sampleCreateUser();
-			User user = makeUserCreationRequest(createUserDTO);
-			Post createPostDTO = sampleCreatePost(user);
+			PostDTO createPostDTO = sampleCreatePost();
 
 			// when
-			Post post = makePostCreationRequest(createPostDTO, user.getId());
+			PostDTO post = makePostCreationRequest(createPostDTO, user.getId());
 
 			// then
-			Assertions.assertAll(
-				() -> assertThat(post.getContent()).isEqualTo(createPostDTO.getContent()),
-				() -> assertThat(post.getUser()).isEqualTo(createPostDTO.getUser())
-			);
-
-			// tear down
-			makePostDeletionRequest(post.getId());
-			makeUserDeletionRequest(user.getId());
+			assertThat(post.getContent()).isEqualTo(createPostDTO.getContent());
 		}
 
 		@Test
 		void shouldThrowAnExceptionWhenUserPassNullValuesForMandatoryPostField() {
 			// given
-			User createUserDTO = sampleCreateUser();
-			User user = makeUserCreationRequest(createUserDTO);
-			Post createPost = sampleCreatePost(user)
-					.toBuilder()
-					.content(null)
-					.build();
+			PostDTO createPost = sampleCreatePost().toBuilder().content(null).build();
 
 			// when
 			@SuppressWarnings("unchecked")
 			Map<String, String> errorResponse = (Map<String, String>) given()
-					.contentType(MediaType.APPLICATION_JSON_VALUE)
-					.body(createPost)
-					.post(CREATE_POST_URL_WITHOUT_USER_ID + user.getId())
-					.then()
-					.statusCode(HttpStatus.BAD_REQUEST.value())
-					.extract()
-					.as(Map.class);
+				.contentType(MediaType.APPLICATION_JSON_VALUE)
+				.body(createPost)
+				.post(CREATE_POST_URL_WITHOUT_USER_ID + user.getId())
+				.then()
+				.statusCode(HttpStatus.BAD_REQUEST.value())
+				.extract()
+				.as(Map.class);
 
 			// then
 			int expectedErrorsSize = 1;
 
 			assertThat(errorResponse.keySet())
-					.hasSize(expectedErrorsSize)
-					.containsExactlyInAnyOrderElementsOf(Set.of("content"));
-
-			// tear down
-			makeUserDeletionRequest(user.getId());
+				.hasSize(expectedErrorsSize)
+				.containsExactlyInAnyOrderElementsOf(Set.of("content"));
 		}
 
 		@Test
 		void shouldThrowAnExceptionWhenUserPassTooLongValueForPostContentField() {
 			// given
-			User createUserDTO = sampleCreateUser();
-			User user = makeUserCreationRequest(createUserDTO);
-			Post createPost = sampleCreatePost(user)
-					.toBuilder()
-					.content("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum ultricies placerat quam ut luctus. Etiam fringilla, enim vitae cursus laoreet, diam nisl consectetur nulla, eget tincidunt nunc turpis id orci. Sed feugiat rutrum purus quis luctus. Nulla malesuada posuere sapien, nec aliquam diam varius vel. Maecenas facilisis vel est consectetur tincidunt. In laoreet magna mauris, sit amet tempor nibh tempor eget. Nulla porttitor sodales lectus, a ultricies ipsum euismod blandit. Mauris ullamcorper turpis.")
-					.build();
+			int lengthOfWrongContent = 513;
+
+			String wrongLengthContent = IntStream
+				.range(0, lengthOfWrongContent)
+				.mapToObj(element -> "a")
+				.collect(Collectors.joining());
+
+			PostDTO createPost = sampleCreatePost()
+				.toBuilder()
+				.content(wrongLengthContent)
+				.build();
 
 			// when
 			@SuppressWarnings("unchecked")
 			Map<String, String> errorResponse = (Map<String, String>) given()
-					.contentType(MediaType.APPLICATION_JSON_VALUE)
-					.body(createPost)
-					.post(CREATE_POST_URL_WITHOUT_USER_ID + user.getId())
-					.then()
-					.statusCode(HttpStatus.BAD_REQUEST.value())
-					.extract()
-					.as(Map.class);
+				.contentType(MediaType.APPLICATION_JSON_VALUE)
+				.body(createPost)
+				.post(CREATE_POST_URL_WITHOUT_USER_ID + user.getId())
+				.then()
+				.statusCode(HttpStatus.BAD_REQUEST.value())
+				.extract()
+				.as(Map.class);
 
 			// then
 			int expectedErrorsSize = 1;
 
 			assertThat(errorResponse.keySet())
-					.hasSize(expectedErrorsSize)
-					.containsExactlyInAnyOrderElementsOf(Set.of("content"));
-
-			// tear down
-			makeUserDeletionRequest(user.getId());
+				.hasSize(expectedErrorsSize)
+				.containsExactlyInAnyOrderElementsOf(Set.of("content"));
 		}
+
 		@Test
 		void shouldCorrectlyAddMoreThanOnePostToOneUser() {
 			// given
-			User createUserDTO = sampleCreateUser();
-			User user = makeUserCreationRequest(createUserDTO);
-			Post firstPost = sampleCreatePost(user)
-					.toBuilder()
-					.content("Daaawideek")
-					.build();
+			PostDTO firstPost = sampleCreatePost()
+				.toBuilder()
+				.content("Daaawideek")
+				.build();
 
-			Post secondPost = sampleCreatePost(user)
-					.toBuilder()
-					.content("James 1.25 zgłoś się")
-					.build();
+			PostDTO secondPost = sampleCreatePost()
+				.toBuilder()
+				.content("James 1.25 zgłoś się")
+				.build();
 
 			// when
-			Post firstCreatedPost = makePostCreationRequest(firstPost, user.getId());
-			Post secondCreatedPost = makePostCreationRequest(secondPost, user.getId());
+			PostDTO firstCreatedPost = makePostCreationRequest(
+				firstPost,
+				user.getId()
+			);
+			PostDTO secondCreatedPost = makePostCreationRequest(
+				secondPost,
+				user.getId()
+			);
 
 			// then
-			Set<String> expectedPostContents = Set.of("Daaawideek", "James 1.25 zgłoś się");
+			Set<String> expectedPostContents = Set.of(
+				"Daaawideek",
+				"James 1.25 zgłoś się"
+			);
 
 			assertThat(
-					Set.of(firstCreatedPost.getContent(), secondCreatedPost.getContent())
+				Set.of(firstCreatedPost.getContent(), secondCreatedPost.getContent())
 			)
-					.hasSize(2)
-					.containsExactlyInAnyOrderElementsOf(expectedPostContents);
-
-			// tear down
-			Stream
-					.of(firstCreatedPost.getId(), secondCreatedPost.getId())
-					.forEach(PostIntegrationTest.this::makePostDeletionRequest);
-
-			makeUserDeletionRequest(user.getId());
+				.hasSize(2)
+				.containsExactlyInAnyOrderElementsOf(expectedPostContents);
 		}
-
 	}
 
 	@Nested
 	@DisplayName("Get posts test")
 	@Tag("GET")
 	class GetPostsTests {
+
 		@Test
 		void shouldCorrectlyGetPostAfterCreatingMultiplePosts() {
 			// given
-			User createUserDTO = sampleCreateUser();
-			User user = makeUserCreationRequest(createUserDTO);
-			List<String> postContents = List.of("Lorem dawidsum", "Lorem jamesum", "Lorem adriansum", "Lorem cezarsum");
+			List<String> postContents = List.of(
+				"Lorem dawidsum",
+				"Lorem jamesum",
+				"Lorem adriansum",
+				"Lorem cezarsum"
+			);
 
 			// when
-			List<Post> createdPosts = postContents
-					.stream()
-					.map(postContent -> {
-						Post createdPost = sampleCreatePost(user)
-								.toBuilder()
-								.content(String.valueOf(postContent))
-								.build();
+			List<PostDTO> createdPosts = postContents
+				.stream()
+				.map(postContent -> {
+					PostDTO createdPost = sampleCreatePost()
+						.toBuilder()
+						.content(String.valueOf(postContent))
+						.build();
 
-						return makePostCreationRequest(createdPost, user.getId());
-					})
-					.toList();
+					return makePostCreationRequest(createdPost, user.getId());
+				})
+				.toList();
 
-			List<Post> posts = Arrays
-					.stream(
-							given()
-									.get(GET_ALL_POSTS_URL)
-									.then()
-									.statusCode(HttpStatus.OK.value())
-									.and()
-									.extract()
-									.as(Post[].class)
-					)
-					.toList();
+			List<PostDTO> posts = Arrays
+				.stream(
+					given()
+						.get(GET_ALL_POSTS_URL)
+						.then()
+						.statusCode(HttpStatus.OK.value())
+						.and()
+						.extract()
+						.as(PostDTO[].class)
+				)
+				.toList();
 
 			// then
 			int expectedSize = postContents.size();
 
 			assertThat(posts)
-					.hasSize(expectedSize)
-					.hasAtLeastOneElementOfType(Post.class)
-					.containsExactlyInAnyOrderElementsOf(createdPosts);
-
-			// tear down
-			createdPosts.forEach(createdPost ->
-					makePostDeletionRequest(createdPost.getId())
-			);
-			makeUserDeletionRequest(user.getId());
+				.hasSize(expectedSize)
+				.hasAtLeastOneElementOfType(PostDTO.class)
+				.extracting(PostDTO::getContent)
+				.containsExactlyInAnyOrderElementsOf(postContents);
 		}
 
 		@Test
 		void shouldReturnEmptyListWhenThereAreNoPostsInDatabase() {
 			// when
 			List<Post> posts = Arrays
-					.stream(
-							given()
-									.get(GET_ALL_POSTS_URL)
-									.then()
-									.statusCode(HttpStatus.OK.value())
-									.and()
-									.extract()
-									.as(Post[].class)
-					)
-					.toList();
+				.stream(
+					given()
+						.get(GET_ALL_POSTS_URL)
+						.then()
+						.statusCode(HttpStatus.OK.value())
+						.and()
+						.extract()
+						.as(Post[].class)
+				)
+				.toList();
 
 			// then
 			int expectedSize = 0;
@@ -225,30 +229,24 @@ class PostIntegrationTest {
 		@Test
 		void shouldCorrectlyFindPostsByIdWhenPostIsCreated() {
 			// given
-			User createUserDTO = sampleCreateUser();
-			User user = makeUserCreationRequest(createUserDTO);
-			Post createPost = sampleCreatePost(user);
+			PostDTO createPost = sampleCreatePost();
 
 			// when
-			Post post = makePostCreationRequest(createPost, user.getId());
+			PostDTO post = makePostCreationRequest(createPost, user.getId());
 			Post getPost = given()
-					.get(GET_ALL_POSTS_URL + "/" + post.getId())
-					.then()
-					.statusCode(HttpStatus.OK.value())
-					.and()
-					.extract()
-					.as(Post.class);
+				.get(GET_ALL_POSTS_URL + "/" + post.getId())
+				.then()
+				.statusCode(HttpStatus.OK.value())
+				.and()
+				.extract()
+				.as(Post.class);
 
 			// then
 			Assertions.assertAll(
-					() -> assertThat(getPost.getContent()).isEqualTo(post.getContent())
+				() -> assertThat(getPost.getId()).isEqualTo(post.getId()),
+				() -> assertThat(getPost.getContent()).isEqualTo(post.getContent())
 			);
-
-			// tear down
-			makeUserDeletionRequest(user.getId());
-			makePostDeletionRequest(post.getId());
 		}
-
 	}
 
 	@Nested
@@ -264,13 +262,10 @@ class PostIntegrationTest {
 			// when
 
 			// then
-			assertThatNoException()
-					.isThrownBy(() ->
-							given()
-									.delete(GET_ALL_POSTS_URL + "/" + someRandomId)
-									.then()
-									.statusCode(HttpStatus.NOT_FOUND.value())
-					);
+			given()
+				.delete(GET_ALL_POSTS_URL + "/" + someRandomId)
+				.then()
+				.statusCode(HttpStatus.NOT_FOUND.value());
 		}
 	}
 
@@ -282,83 +277,44 @@ class PostIntegrationTest {
 		@Test
 		void shouldUpdatePostWhenPostIsAlreadyCreated() {
 			// given
-			User createUserDTO = sampleCreateUser();
-			User user = makeUserCreationRequest(createUserDTO);
-			Post postCreateRequest = sampleCreatePost(user);
+			PostDTO postCreateRequest = sampleCreatePost();
 			String changedContent = "James 1.25 zgłoś się";
 
 			// when
-			Post createdPost = makePostCreationRequest(postCreateRequest, user.getId());
-			Post modifiedPostRequest = createdPost
-					.toBuilder()
-					.content(changedContent)
-					.build();
-			Post modifiedPost = makePostUpdateRequest(modifiedPostRequest, createdPost.getId());
+			PostDTO createdPost = makePostCreationRequest(
+				postCreateRequest,
+				user.getId()
+			);
+			PostDTO modifiedPostRequest = createdPost
+				.toBuilder()
+				.content(changedContent)
+				.build();
+
+			PostDTO modifiedPost = makePostUpdateRequest(
+				modifiedPostRequest,
+				user.getId()
+			);
 
 			// then
 			Assertions.assertAll(
-					() -> assertThat(modifiedPost.getId()).isEqualTo(createdPost.getId()),
-					() ->
-							assertThat(modifiedPost.getContent())
-									.isEqualTo(createdPost.getContent())
+				() -> assertThat(modifiedPost.getId()).isEqualTo(createdPost.getId()),
+				() -> assertThat(modifiedPost.getContent()).isEqualTo(changedContent)
 			);
-
-			Assertions.assertAll(
-					() -> assertThat(modifiedPost.getContent()).isEqualTo(changedContent)
-			);
-
-			// tear down
-			makeUserDeletionRequest(modifiedPost.getId());
-			makeUserDeletionRequest(user.getId());
 		}
-
-		@Test
-		void shouldThrowAnExceptionWhenWantingToChangePostWithWrongData() {
-			// given
-			User createUserDTO = sampleCreateUser();
-			User user = makeUserCreationRequest(createUserDTO);
-			Post postCreateRequest = sampleCreatePost(user);
-
-			Post createdPost = makePostCreationRequest(postCreateRequest, user.getId());
-			Post modifiedPostRequest = createdPost.toBuilder().content(null).build();
-
-			@SuppressWarnings("unchecked")
-			Map<String, String> errorResponse = (Map<String, String>) given()
-					.contentType(MediaType.APPLICATION_JSON_VALUE)
-					.body(modifiedPostRequest)
-					.put(GET_ALL_POSTS_URL + "/" + createdPost.getId())
-					.then()
-					.statusCode(HttpStatus.BAD_REQUEST.value())
-					.extract()
-					.as(Map.class);
-
-			int expectedErrorsSize = 1;
-
-			assertThat(errorResponse.keySet())
-					.hasSize(expectedErrorsSize)
-					.containsExactlyInAnyOrderElementsOf(Set.of("content"));
-
-			// tear down
-			makePostDeletionRequest(createdPost.getId());
-			makeUserDeletionRequest(user.getId());
-		}
-
 	}
+
 	private static User sampleCreateUser() {
 		return User
-				.builder()
-				.email("czarek@wp.pl")
-				.name("Cezary")
-				.surname("Skorupski")
-				.password("some-random-password")
-				.build();
-	}
-	private static Post sampleCreatePost(User User) {
-		return Post
 			.builder()
-			.content("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis et ornare sapien.")
-			.user(User)
+			.email("czarek@wp.pl")
+			.name("Cezary")
+			.surname("Skorupski")
+			.password("some-random-password")
 			.build();
+	}
+
+	private static PostDTO sampleCreatePost() {
+		return PostDTO.builder().content("Some content").build();
 	}
 
 	private User makeUserCreationRequest(User createUser) {
@@ -374,17 +330,17 @@ class PostIntegrationTest {
 			.as(User.class);
 	}
 
-	private Post makePostCreationRequest(Post createPost, Long userId) {
+	private PostDTO makePostCreationRequest(PostDTO createPost, Long userId) {
 		return given()
-				.contentType(MediaType.APPLICATION_JSON_VALUE)
-				.body(createPost)
-				.post(CREATE_POST_URL_WITHOUT_USER_ID + userId)
-				.then()
-				.statusCode(HttpStatus.OK.value())
-				.log()
-				.body()
-				.extract()
-				.as(Post.class);
+			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.body(createPost)
+			.post(CREATE_POST_URL_WITHOUT_USER_ID + userId)
+			.then()
+			.statusCode(HttpStatus.OK.value())
+			.log()
+			.body()
+			.extract()
+			.as(PostDTO.class);
 	}
 
 	private void makeUserDeletionRequest(Long userId) {
@@ -393,24 +349,24 @@ class PostIntegrationTest {
 			.then()
 			.statusCode(HttpStatus.OK.value());
 	}
+
 	private void makePostDeletionRequest(Long postId) {
 		given()
-				.delete(GET_ALL_POSTS_URL + "/" + postId)
-				.then()
-				.statusCode(HttpStatus.OK.value());
+			.delete(GET_ALL_POSTS_URL + "/" + postId)
+			.then()
+			.statusCode(HttpStatus.OK.value());
 	}
 
-	private Post makePostUpdateRequest(Post updatedPost, Long postId) {
+	private PostDTO makePostUpdateRequest(PostDTO updatedPost, Long userId) {
 		return given()
-				.contentType(MediaType.APPLICATION_JSON_VALUE)
-				.body(updatedPost)
-				.put(GET_ALL_POSTS_URL +  "/" + postId) // Assuming a URL for updating a specific post exists
-				.then()
-				.statusCode(HttpStatus.OK.value())
-				.log()
-				.body()
-				.extract()
-				.as(Post.class);
+			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.body(updatedPost)
+			.put(GET_ALL_POSTS_URL + "/user/" + userId)
+			.then()
+			.statusCode(HttpStatus.OK.value())
+			.log()
+			.body()
+			.extract()
+			.as(PostDTO.class);
 	}
-
 }

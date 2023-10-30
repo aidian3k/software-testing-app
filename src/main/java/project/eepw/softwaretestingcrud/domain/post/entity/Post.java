@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,6 +24,7 @@ import project.eepw.softwaretestingcrud.domain.user.entity.User;
 @Getter
 @Setter
 @Builder(toBuilder = true)
+@EqualsAndHashCode
 public class Post {
 
 	@Id
@@ -34,6 +36,8 @@ public class Post {
 	@Size(max = 512)
 	private String content;
 
-	@ManyToOne(fetch = FetchType.EAGER)
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JsonIgnore
+	@EqualsAndHashCode.Exclude
 	private User user;
 }
