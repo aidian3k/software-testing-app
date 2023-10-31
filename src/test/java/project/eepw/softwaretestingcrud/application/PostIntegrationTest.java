@@ -26,8 +26,8 @@ import java.util.stream.IntStream;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
-import static project.eepw.softwaretestingcrud.IntegrationTestConstants.CREATE_POST_URL_WITHOUT_USER_ID;
-import static project.eepw.softwaretestingcrud.IntegrationTestConstants.GET_ALL_POSTS_URL;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static project.eepw.softwaretestingcrud.IntegrationTestConstants.*;
 
 @SpringBootTest(
 	webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
@@ -260,6 +260,66 @@ class PostIntegrationTest {
 	@DisplayName("Delete posts test")
 	@Tag("DELETE")
 	class DeletePostTests {
+		@Test
+		void shouldDeletePostWhenPostIsCreatedProperly() {
+			// given
+			PostCreationDTO createPostDTO = sampleCreatePost();
+
+			// when
+			PostDTO post = makePostCreationRequest(createPostDTO, user.getId());
+			makePostDeletionRequest(post.getId());
+
+			// then
+			assertThatNoException()
+					.isThrownBy(() ->
+							given()
+									.delete(GET_ALL_POSTS_URL + "/" + post.getId())
+									.then()
+									.statusCode(HttpStatus.NOT_FOUND.value())
+					);
+		}
+
+		@Test
+		void shouldDeleteMoreThanOnePostWhenPostsAreCreatedProperly() {
+			// given
+			PostCreationDTO firstPost = sampleCreatePost()
+					.toBuilder()
+					.content("Daaawideek")
+					.build();
+
+			PostCreationDTO secondPost = sampleCreatePost()
+					.toBuilder()
+					.content("James 1.25 zgłoś się")
+					.build();
+
+			// when
+			PostDTO firstCreatedPost = makePostCreationRequest(
+					firstPost,
+					user.getId()
+			);
+			PostDTO secondCreatedPost = makePostCreationRequest(
+					secondPost,
+					user.getId()
+			);
+			makePostDeletionRequest(firstCreatedPost.getId());
+			makePostDeletionRequest(secondCreatedPost.getId());
+
+			// then
+			assertThatNoException()
+					.isThrownBy(() ->
+							given()
+									.delete(GET_ALL_POSTS_URL + "/" + firstCreatedPost.getId())
+									.then()
+									.statusCode(HttpStatus.NOT_FOUND.value())
+					);
+			assertThatNoException()
+					.isThrownBy(() ->
+							given()
+									.delete(GET_ALL_POSTS_URL + "/" + secondCreatedPost.getId())
+									.then()
+									.statusCode(HttpStatus.NOT_FOUND.value())
+					);
+		}
 
 		@Test
 		void shouldThrowAnExceptionWhenTryingToDeletePostWhichDoesNotExist() {
