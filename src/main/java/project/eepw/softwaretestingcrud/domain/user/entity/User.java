@@ -56,7 +56,7 @@ public class User {
 
 	@OneToMany(
 		mappedBy = "user",
-		fetch = FetchType.LAZY,
+		fetch = FetchType.EAGER,
 		cascade = CascadeType.ALL
 	)
 	@EqualsAndHashCode.Exclude

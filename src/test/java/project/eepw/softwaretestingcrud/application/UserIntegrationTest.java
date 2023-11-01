@@ -1,14 +1,5 @@
 package project.eepw.softwaretestingcrud.application;
 
-import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.*;
-import static project.eepw.softwaretestingcrud.IntegrationTestConstants.*;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -18,6 +9,19 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import project.eepw.softwaretestingcrud.domain.user.entity.User;
+import project.eepw.softwaretestingcrud.fixtures.UserFixtures;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static project.eepw.softwaretestingcrud.IntegrationTestConstants.CREATE_USER_URL;
+import static project.eepw.softwaretestingcrud.IntegrationTestConstants.GET_ALL_USERS_URL;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 class UserIntegrationTest {
@@ -33,7 +37,7 @@ class UserIntegrationTest {
 			User createUserDTO = sampleCreateUser();
 
 			// when
-			User user = makeUserCreationRequest(createUserDTO);
+			User user = UserFixtures.makeUserCreationRequest(createUserDTO);
 
 			// then
 			Assertions.assertAll(
@@ -45,7 +49,7 @@ class UserIntegrationTest {
 			);
 
 			// tear down
-			makeUserDeletionRequest(user.getId());
+			UserFixtures.makeUserDeletionRequest(user.getId());
 		}
 
 		@Test
@@ -113,8 +117,8 @@ class UserIntegrationTest {
 				.build();
 
 			// when
-			User firstCreatedUser = makeUserCreationRequest(firstUser);
-			User secondCreatedUser = makeUserCreationRequest(secondUser);
+			User firstCreatedUser = UserFixtures.makeUserCreationRequest(firstUser);
+			User secondCreatedUser = UserFixtures.makeUserCreationRequest(secondUser);
 
 			// then
 			Set<String> expectedUserNames = Set.of("Dawidek", "Adrian");
@@ -128,7 +132,7 @@ class UserIntegrationTest {
 			// tear down
 			Stream
 				.of(firstCreatedUser.getId(), secondCreatedUser.getId())
-				.forEach(UserIntegrationTest.this::makeUserDeletionRequest);
+				.forEach(UserFixtures::makeUserDeletionRequest);
 		}
 	}
 
@@ -152,7 +156,7 @@ class UserIntegrationTest {
 						.name(String.valueOf(userName))
 						.build();
 
-					return makeUserCreationRequest(createdUser);
+					return UserFixtures.makeUserCreationRequest(createdUser);
 				})
 				.toList();
 
@@ -178,7 +182,7 @@ class UserIntegrationTest {
 
 			// tear down
 			createdUsers.forEach(createdUser ->
-				makeUserDeletionRequest(createdUser.getId())
+				UserFixtures.makeUserDeletionRequest(createdUser.getId())
 			);
 		}
 
@@ -209,7 +213,7 @@ class UserIntegrationTest {
 			User createUser = sampleCreateUser();
 
 			// when
-			User user = makeUserCreationRequest(createUser);
+			User user = UserFixtures.makeUserCreationRequest(createUser);
 			User getUser = given()
 				.get(GET_ALL_USERS_URL + "/" + user.getId())
 				.then()
@@ -226,7 +230,7 @@ class UserIntegrationTest {
 			);
 
 			// tear down
-			makeUserDeletionRequest(user.getId());
+			UserFixtures.makeUserDeletionRequest(user.getId());
 		}
 
 		@Test
@@ -273,8 +277,8 @@ class UserIntegrationTest {
 			User createUser = sampleCreateUser();
 
 			// when
-			User user = makeUserCreationRequest(createUser);
-			makeUserDeletionRequest(user.getId());
+			User user = UserFixtures.makeUserCreationRequest(createUser);
+			UserFixtures.makeUserDeletionRequest(user.getId());
 
 			// then
 			assertThatNoException()
@@ -300,7 +304,9 @@ class UserIntegrationTest {
 			String changedPassword = "some-updated-password";
 
 			// when
-			User createdUser = makeUserCreationRequest(userCreateRequest);
+			User createdUser = UserFixtures.makeUserCreationRequest(
+				userCreateRequest
+			);
 			User modifiedUserRequest = createdUser
 				.toBuilder()
 				.name(changedName)
@@ -332,7 +338,7 @@ class UserIntegrationTest {
 			);
 
 			// tear down
-			makeUserDeletionRequest(modifiedUser.getId());
+			UserFixtures.makeUserDeletionRequest(modifiedUser.getId());
 		}
 
 		@Test
@@ -341,7 +347,9 @@ class UserIntegrationTest {
 			User userCreateRequest = sampleCreateUser();
 
 			// when
-			User createdUser = makeUserCreationRequest(userCreateRequest);
+			User createdUser = UserFixtures.makeUserCreationRequest(
+				userCreateRequest
+			);
 			User modifiedUserRequest = createdUser.toBuilder().name(null).build();
 
 			@SuppressWarnings("unchecked")
@@ -361,7 +369,7 @@ class UserIntegrationTest {
 				.containsExactlyInAnyOrderElementsOf(Set.of("name"));
 
 			// tear down
-			makeUserDeletionRequest(createdUser.getId());
+			UserFixtures.makeUserDeletionRequest(createdUser.getId());
 		}
 	}
 
@@ -373,25 +381,5 @@ class UserIntegrationTest {
 			.surname("Nowosielski")
 			.password("some-random-password")
 			.build();
-	}
-
-	private User makeUserCreationRequest(User createUser) {
-		return given()
-			.contentType(MediaType.APPLICATION_JSON_VALUE)
-			.body(createUser)
-			.post(CREATE_USER_URL)
-			.then()
-			.statusCode(HttpStatus.OK.value())
-			.log()
-			.body()
-			.extract()
-			.as(User.class);
-	}
-
-	private void makeUserDeletionRequest(Long userId) {
-		given()
-			.delete(GET_ALL_USERS_URL + "/" + userId)
-			.then()
-			.statusCode(HttpStatus.OK.value());
 	}
 }

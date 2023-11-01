@@ -12,5 +12,8 @@ public final class IntegrationTestConstants {
 		GET_ALL_USERS_URL + "/create-user";
 
 	// post endpoints
-	public static final String GET_ALL_POSTS = "api/post";
+	public static final String GET_ALL_POSTS_URL = "api/post";
+	public static final String CREATE_POST_URL_WITHOUT_USER_ID =
+			GET_ALL_POSTS_URL + "/user/";
+
 }

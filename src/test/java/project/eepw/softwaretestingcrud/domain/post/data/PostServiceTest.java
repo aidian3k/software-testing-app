@@ -1,23 +1,25 @@
 package project.eepw.softwaretestingcrud.domain.post.data;
 
+import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import project.eepw.softwaretestingcrud.domain.post.dto.PostDTO;
 import project.eepw.softwaretestingcrud.domain.post.entity.Post;
 import project.eepw.softwaretestingcrud.domain.user.data.UserService;
 import project.eepw.softwaretestingcrud.domain.user.entity.User;
-import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import project.eepw.softwaretestingcrud.infrastructure.exception.PostNotFoundException;
 import project.eepw.softwaretestingcrud.infrastructure.exception.UserNotFoundException;
 
-
-import java.util.List;
-import java.util.Set;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -28,177 +30,196 @@ import static project.eepw.softwaretestingcrud.domain.DomainUtils.makeUser;
 @ExtendWith(MockitoExtension.class)
 class PostServiceTest {
 
-    @Mock
-    private PostRepository postRepository;
+	@Mock
+	private PostRepository postRepository;
 
-    @Mock
-    private UserService userService;
+	@Mock
+	private UserService userService;
 
-    @InjectMocks
-    private PostService postService;
+	@InjectMocks
+	private PostService postService;
 
-    @Test
-    void shouldReturnPostWhenGivenExistingPostId() {
-        //given
-        Post post = makePost();
-        Long id = post.getId();
+	@Test
+	void shouldReturnPostWhenGivenExistingPostId() {
+		//given
+		Post post = makePost();
+		Long id = post.getId();
 
-        when(postRepository.findById(id)).thenReturn(Optional.of(post));
+		when(postRepository.findById(id)).thenReturn(Optional.of(post));
 
-        //when
-        Post fetchedPost = postService.getPostById(id);
+		//when
+		PostDTO fetchedPost = postService.getPostDTOById(id);
 
-        //then
-        verify(postRepository, times(1)).findById(id);
-        assertThat(fetchedPost)
-                .usingRecursiveComparison()
-                .isEqualTo(post);
-    }
+		//then
+		verify(postRepository, times(1)).findById(id);
 
-    @Test
-    void shouldThrowExceptionWhenGivenNonExistingPostId() {
-        //given
-        Long nonExistingPostId = 2L;
-        when(postRepository.findById(nonExistingPostId)).thenReturn(Optional.empty());
+		Assertions.assertAll(
+			() -> assertThat(fetchedPost.getId()).isEqualTo(post.getId()),
+			() -> assertThat(fetchedPost.getContent()).isEqualTo(post.getContent())
+		);
+	}
 
-        //when
-        ThrowingCallable getPostByIdExecutable = () -> postService.getPostById(nonExistingPostId);
+	@Test
+	void shouldThrowExceptionWhenGivenNonExistingPostId() {
+		//given
+		Long nonExistingPostId = 2L;
+		when(postRepository.findById(nonExistingPostId))
+			.thenReturn(Optional.empty());
 
-        //then
-        assertThatThrownBy(getPostByIdExecutable)
-                .isInstanceOf(PostNotFoundException.class)
-                .hasMessageContaining("Post has not been found!");
-        verify(postRepository, times(1)).findById(nonExistingPostId);
-    }
+		//when
+		ThrowingCallable getPostByIdExecutable = () ->
+			postService.getPostDTOById(nonExistingPostId);
 
-    @Test
-    void shouldThrowExceptionWhenGivenNullId() {
-        //given
-        Long nullId = null;
-        when(postRepository.findById(nullId)).thenThrow(IllegalArgumentException.class);
+		//then
+		assertThatThrownBy(getPostByIdExecutable)
+			.isInstanceOf(PostNotFoundException.class)
+			.hasMessageContaining("Post has not been found!");
+		verify(postRepository, times(1)).findById(nonExistingPostId);
+	}
 
-        //when
-        ThrowingCallable getPostByIdExecutable = () -> postService.getPostById(nullId);
+	@Test
+	void shouldThrowExceptionWhenGivenNullId() {
+		//given
+		Long nullId = null;
+		when(postRepository.findById(nullId))
+			.thenThrow(IllegalArgumentException.class);
 
-        //then
-        assertThatThrownBy(getPostByIdExecutable)
-                .isInstanceOf(IllegalArgumentException.class);
-        verify(postRepository, times(1)).findById(nullId);
-    }
+		//when
+		ThrowingCallable getPostByIdExecutable = () ->
+			postService.getPostDTOById(nullId);
 
-    @Test
-    void shouldReturnAllPostsWhenGetAllPostsInvoked() {
-        //given
-        Post firstPost = makePost();
-        Post secondPost = makePost().toBuilder()
-                .id(2L)
-                .content("Another post content")
-                .user(makeUser())
-                .build();
+		//then
+		assertThatThrownBy(getPostByIdExecutable)
+			.isInstanceOf(IllegalArgumentException.class);
+		verify(postRepository, times(1)).findById(nullId);
+	}
 
-        List<Post> expectedListOfPosts = List.of(firstPost, secondPost);
+	@Test
+	void shouldReturnAllPostsWhenGetAllPostsInvoked() {
+		//given
+		Post firstPost = makePost();
+		Post secondPost = makePost()
+			.toBuilder()
+			.id(2L)
+			.content("Another post content")
+			.user(makeUser())
+			.build();
 
-        when(postRepository.findAll()).thenReturn(expectedListOfPosts);
+		List<Post> expectedListOfPosts = List.of(firstPost, secondPost);
+		List<PostDTO> expectedFetchedListOfPosts = expectedListOfPosts
+			.stream()
+			.map(post ->
+				PostDTO.builder().id(post.getId()).content(post.getContent()).build()
+			)
+			.toList();
 
-        //when
-        Collection<Post> allPosts = postService.getAllPosts();
+		when(postRepository.findAll()).thenReturn(expectedListOfPosts);
 
-        //then
-        verify(postRepository, times(1)).findAll();
-        assertThat(allPosts)
-                .usingRecursiveComparison()
-                .isEqualTo(expectedListOfPosts);
-    }
+		//when
+		Collection<PostDTO> allPosts = postService.getAllPosts();
 
-    @Test
-    void shouldReturnEmptyCollectionWhenNoPostsInDatabase() {
-        //given
-        when(postRepository.findAll()).thenReturn(Collections.emptyList());
+		//then
+		verify(postRepository, times(1)).findAll();
+		assertThat(allPosts).containsExactlyInAnyOrderElementsOf(expectedFetchedListOfPosts);
+	}
 
-        //when
-        Collection<Post> allPosts = postService.getAllPosts();
+	@Test
+	void shouldReturnEmptyCollectionWhenNoPostsInDatabase() {
+		//given
+		when(postRepository.findAll()).thenReturn(Collections.emptyList());
 
-        //then
-        verify(postRepository, times(1)).findAll();
-        assertThat(allPosts)
-                .usingRecursiveComparison()
-                .isEqualTo(Collections.emptyList());
-    }
+		//when
+		Collection<PostDTO> allPosts = postService.getAllPosts();
 
-    @Test
-    void shouldReturnSetOfUserPostsWhenGivenExistingUserId() {
-        //given
-        Post firstPost = makePost();
-        Post secondPost = makePost().toBuilder()
-                .id(2L)
-                .content("Another post content")
-                .build();
-        User user = makeUser().toBuilder()
-                .posts(Set.of(firstPost, secondPost))
-                .build();
-        Long userId = user.getId();
+		//then
+		verify(postRepository, times(1)).findAll();
+		assertThat(allPosts).isEmpty();
+	}
 
-        Collection<Post> expectedListOfPosts = Set.of(firstPost, secondPost);
-        when(userService.getUserById(userId)).thenReturn(user);
+	@Test
+	void shouldReturnSetOfUserPostsWhenGivenExistingUserId() {
+		//given
+		Post firstPost = makePost();
+		Post secondPost = makePost()
+			.toBuilder()
+			.id(2L)
+			.content("Another post content")
+			.build();
+		User user = makeUser()
+			.toBuilder()
+			.posts(Set.of(firstPost, secondPost))
+			.build();
+		Long userId = user.getId();
 
-        //when
-        Collection<Post> fetchedPosts = postService.getAllUserPosts(userId);
+		Collection<Post> expectedListOfPosts = Set.of(firstPost, secondPost);
+		Collection<PostDTO> expectedListOfPostDTOs = expectedListOfPosts
+			.stream()
+			.map(post ->
+				PostDTO.builder().id(post.getId()).content(post.getContent()).build()
+			)
+			.collect(Collectors.toSet());
+		when(userService.getUserById(userId)).thenReturn(user);
+		//when
+		Collection<PostDTO> fetchedPosts = postService.getAllUserPosts(userId);
 
-        //then
-        verify(userService, times(1)).getUserById(userId);
-        assertThat(fetchedPosts)
-                .usingRecursiveComparison()
-                .isEqualTo(expectedListOfPosts);
-    }
+		//then
+		verify(userService, times(1)).getUserById(userId);
 
-    @Test
-    void shouldReturnEmptySetOfUserPostsWhenGivenIdOfExistingUserWithoutPosts() {
-        //given
-        User user = makeUser();
-        Long userId = user.getId();
+		assertThat(fetchedPosts)
+			.usingRecursiveComparison()
+			.isEqualTo(expectedListOfPostDTOs);
+	}
 
-        when(userService.getUserById(userId)).thenReturn(user);
+	@Test
+	void shouldReturnEmptySetOfUserPostsWhenGivenIdOfExistingUserWithoutPosts() {
+		//given
+		User user = makeUser();
+		Long userId = user.getId();
 
-        //when
-        Collection<Post> fetchedPosts = postService.getAllUserPosts(userId);
+		when(userService.getUserById(userId)).thenReturn(user);
 
-        //then
-        verify(userService, times(1)).getUserById(userId);
-        assertThat(fetchedPosts)
-                .usingRecursiveComparison()
-                .isEqualTo(Set.of());
-    }
+		//when
+		Collection<PostDTO> fetchedPosts = postService.getAllUserPosts(userId);
 
-    @Test
-    void shouldThrowExceptionWhenGivenNonExistingUserId() {
-        //given
-        Long userId = 2L;
+		//then
+		verify(userService, times(1)).getUserById(userId);
+		assertThat(fetchedPosts).usingRecursiveComparison().isEqualTo(Set.of());
+	}
 
-        when(userService.getUserById(userId)).thenThrow(new UserNotFoundException("User has not been found"));
+	@Test
+	void shouldThrowExceptionWhenGivenNonExistingUserId() {
+		//given
+		Long userId = 2L;
 
-        //when
-        ThrowingCallable getAllUserPostsExecutable = () -> postService.getAllUserPosts(userId);
+		when(userService.getUserById(userId))
+			.thenThrow(new UserNotFoundException("User has not been found"));
 
-        //then
-        assertThatThrownBy(getAllUserPostsExecutable)
-                .isInstanceOf(UserNotFoundException.class)
-                .hasMessageContaining("User has not been found");
-        verify(userService, times(1)).getUserById(userId);
-    }
+		//when
+		ThrowingCallable getAllUserPostsExecutable = () ->
+			postService.getAllUserPosts(userId);
 
-    @Test
-    void shouldThrowExceptionWhenGivenNullUserId() {
-        //given
-        Long nullUserId = null;
+		//then
+		assertThatThrownBy(getAllUserPostsExecutable)
+			.isInstanceOf(UserNotFoundException.class)
+			.hasMessageContaining("User has not been found");
+		verify(userService, times(1)).getUserById(userId);
+	}
 
-        when(userService.getUserById(nullUserId)).thenThrow(IllegalArgumentException.class);
+	@Test
+	void shouldThrowExceptionWhenGivenNullUserId() {
+		//given
+		Long nullUserId = null;
 
-        //when
-        ThrowingCallable getAllUserPostsExecutable = () -> postService.getAllUserPosts(nullUserId);
+		when(userService.getUserById(nullUserId))
+			.thenThrow(IllegalArgumentException.class);
 
-        //then
-        assertThatThrownBy(getAllUserPostsExecutable)
-                .isInstanceOf(IllegalArgumentException.class);
-        verify(userService, times(1)).getUserById(nullUserId);
-    }
+		//when
+		ThrowingCallable getAllUserPostsExecutable = () ->
+			postService.getAllUserPosts(nullUserId);
+
+		//then
+		assertThatThrownBy(getAllUserPostsExecutable)
+			.isInstanceOf(IllegalArgumentException.class);
+		verify(userService, times(1)).getUserById(nullUserId);
+	}
 }
