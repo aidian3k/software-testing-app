@@ -27,7 +27,8 @@ import java.util.stream.IntStream;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
-import static project.eepw.softwaretestingcrud.IntegrationTestConstants.*;
+import static project.eepw.softwaretestingcrud.IntegrationTestConstants.CREATE_POST_URL_WITHOUT_USER_ID;
+import static project.eepw.softwaretestingcrud.IntegrationTestConstants.GET_ALL_POSTS_URL;
 
 @SpringBootTest(
 	webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
@@ -208,8 +209,7 @@ class PostIntegrationTest {
 			assertThat(posts)
 				.hasSize(expectedSize)
 				.hasAtLeastOneElementOfType(PostDTO.class)
-				.extracting(PostDTO::getContent)
-				.containsExactlyInAnyOrderElementsOf(postContents);
+				.containsExactlyInAnyOrderElementsOf(createdPosts);
 		}
 
 		@Test
@@ -254,12 +254,25 @@ class PostIntegrationTest {
 				() -> assertThat(getPost.getContent()).isEqualTo(post.getContent())
 			);
 		}
+
+		@Test
+		void shouldThrowAnExceptionWhenUserPassesPostIdThatDoesNotExist() {
+			// given
+			long wrongPostId = 1337L;
+
+			// when
+			given()
+				.get(GET_ALL_POSTS_URL + "/" + wrongPostId)
+				.then()
+				.statusCode(HttpStatus.NOT_FOUND.value());
+		}
 	}
 
 	@Nested
 	@DisplayName("Delete posts test")
 	@Tag("DELETE")
 	class DeletePostTests {
+
 		@Test
 		void shouldDeletePostWhenPostIsCreatedProperly() {
 			// given
@@ -271,54 +284,54 @@ class PostIntegrationTest {
 
 			// then
 			assertThatNoException()
-					.isThrownBy(() ->
-							given()
-									.delete(GET_ALL_POSTS_URL + "/" + post.getId())
-									.then()
-									.statusCode(HttpStatus.NOT_FOUND.value())
-					);
+				.isThrownBy(() ->
+					given()
+						.delete(GET_ALL_POSTS_URL + "/" + post.getId())
+						.then()
+						.statusCode(HttpStatus.NOT_FOUND.value())
+				);
 		}
 
 		@Test
 		void shouldDeleteMoreThanOnePostWhenPostsAreCreatedProperly() {
 			// given
 			PostCreationDTO firstPost = sampleCreatePost()
-					.toBuilder()
-					.content("Daaawideek")
-					.build();
+				.toBuilder()
+				.content("Daaawideek")
+				.build();
 
 			PostCreationDTO secondPost = sampleCreatePost()
-					.toBuilder()
-					.content("James 1.25 zgłoś się")
-					.build();
+				.toBuilder()
+				.content("James 1.25 zgłoś się")
+				.build();
 
 			// when
 			PostDTO firstCreatedPost = makePostCreationRequest(
-					firstPost,
-					user.getId()
+				firstPost,
+				user.getId()
 			);
 			PostDTO secondCreatedPost = makePostCreationRequest(
-					secondPost,
-					user.getId()
+				secondPost,
+				user.getId()
 			);
 			makePostDeletionRequest(firstCreatedPost.getId());
 			makePostDeletionRequest(secondCreatedPost.getId());
 
 			// then
 			assertThatNoException()
-					.isThrownBy(() ->
-							given()
-									.delete(GET_ALL_POSTS_URL + "/" + firstCreatedPost.getId())
-									.then()
-									.statusCode(HttpStatus.NOT_FOUND.value())
-					);
+				.isThrownBy(() ->
+					given()
+						.delete(GET_ALL_POSTS_URL + "/" + firstCreatedPost.getId())
+						.then()
+						.statusCode(HttpStatus.NOT_FOUND.value())
+				);
 			assertThatNoException()
-					.isThrownBy(() ->
-							given()
-									.delete(GET_ALL_POSTS_URL + "/" + secondCreatedPost.getId())
-									.then()
-									.statusCode(HttpStatus.NOT_FOUND.value())
-					);
+				.isThrownBy(() ->
+					given()
+						.delete(GET_ALL_POSTS_URL + "/" + secondCreatedPost.getId())
+						.then()
+						.statusCode(HttpStatus.NOT_FOUND.value())
+				);
 		}
 
 		@Test
@@ -340,6 +353,66 @@ class PostIntegrationTest {
 	@DisplayName("Update posts tests")
 	@Tag("UPDATE")
 	class UpdatePostTests {
+
+		@Test
+		void shouldThrowAnExceptionWhenAttemptingToUpdatePostThatDoesNotExist() {
+			// given
+			Long wrongUpdateId = 1024L;
+
+			// when
+			PostDTO postDTO = PostDTO
+				.builder()
+				.id(wrongUpdateId)
+				.content("Some random content")
+				.build();
+
+			given()
+				.contentType(MediaType.APPLICATION_JSON_VALUE)
+				.body(postDTO)
+				.put(GET_ALL_POSTS_URL + "/user/" + user.getId())
+				.then()
+				.statusCode(HttpStatus.NOT_FOUND.value());
+		}
+
+		@Test
+		void shouldThrowAnExceptionWhenTryingToUpdateWithWrongData() {
+			// given
+			int minimumNumberOfCharacters = 0;
+			int maximumNumberOfCharacters = 513;
+			String wrongSizeContent = IntStream
+				.range(minimumNumberOfCharacters, maximumNumberOfCharacters)
+				.mapToObj(String::valueOf)
+				.collect(Collectors.joining(""));
+			PostCreationDTO creationDTO = PostCreationDTO
+				.builder()
+				.content("Good content")
+				.build();
+
+			// when
+			PostDTO createdPost = makePostCreationRequest(creationDTO, user.getId());
+			PostDTO modifiedPost = createdPost
+				.toBuilder()
+				.content(wrongSizeContent)
+				.build();
+
+			@SuppressWarnings("unchecked")
+			Map<String, String> errorResponse = (Map<String, String>) given()
+				.contentType(MediaType.APPLICATION_JSON_VALUE)
+				.body(modifiedPost)
+				.post(CREATE_POST_URL_WITHOUT_USER_ID + user.getId())
+				.then()
+				.statusCode(HttpStatus.BAD_REQUEST.value())
+				.extract()
+				.as(Map.class);
+
+			// then
+			int expectedErrorsSize = 1;
+			Set<String> expectedErrorKeys = Set.of("content");
+
+			assertThat(errorResponse.keySet())
+					.hasSize(expectedErrorsSize)
+					.containsExactlyInAnyOrderElementsOf(expectedErrorKeys);
+		}
 
 		@Test
 		void shouldUpdatePostWhenPostIsAlreadyCreated() {

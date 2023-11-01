@@ -45,10 +45,7 @@ public class PostService {
 			.collect(Collectors.toSet());
 	}
 
-	public PostDTO createPost(
-		PostCreationDTO postCreationDTO,
-		Long userId
-	) {
+	public PostDTO createPost(PostCreationDTO postCreationDTO, Long userId) {
 		User user = userService.getUserById(userId);
 		Post post = Post
 			.builder()
@@ -69,12 +66,21 @@ public class PostService {
 
 	public PostDTO updatePost(PostDTO modifiedPost, Long userId) {
 		User foundUser = userService.getUserById(userId);
-		foundUser
-			.getPosts()
-			.stream()
-			.filter(post -> modifiedPost.getId().equals(post.getId()))
-			.findAny()
-			.ifPresent(post -> foundUser.getPosts().remove(post));
+		Post foundUserCurrentlyExistingPost = foundUser
+				.getPosts()
+				.stream()
+				.filter(post -> modifiedPost.getId().equals(post.getId()))
+				.findAny()
+				.orElseThrow(() ->
+						new PostNotFoundException(
+								String.format(
+										"Post with id=[%d] has not been found",
+										modifiedPost.getId()
+								)
+						)
+				);
+		foundUser.getPosts().remove(foundUserCurrentlyExistingPost);
+
 		Post updatedPost = Post
 			.builder()
 			.id(modifiedPost.getId())
