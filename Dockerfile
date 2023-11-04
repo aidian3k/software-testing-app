@@ -10,6 +10,11 @@ COPY build.gradle .
 COPY settings.gradle .
 COPY src ./src
 
+# Copy config file for docker
+WORKDIR /app/src/main/resources
+RUN if [ -e application-docker.yml ]; then cp application-docker.yml application.yml && rm application-docker.yml; fi
+WORKDIR /app
+
 # Run the Gradle Wrapper to build the project
 RUN ./gradlew build -x test
 
