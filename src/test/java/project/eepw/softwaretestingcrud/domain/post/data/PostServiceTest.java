@@ -45,6 +45,7 @@ class PostServiceTest {
 	@Nested
 	@DisplayName("Get post test")
 	class GetPostTests {
+
 		@Test
 		void shouldReturnPostWhenGivenExistingPostId() {
 			//given
@@ -60,8 +61,8 @@ class PostServiceTest {
 			verify(postRepository, times(1)).findById(id);
 
 			Assertions.assertAll(
-					() -> assertThat(fetchedPost.getId()).isEqualTo(post.getId()),
-					() -> assertThat(fetchedPost.getContent()).isEqualTo(post.getContent())
+				() -> assertThat(fetchedPost.getId()).isEqualTo(post.getId()),
+				() -> assertThat(fetchedPost.getContent()).isEqualTo(post.getContent())
 			);
 		}
 
@@ -70,16 +71,16 @@ class PostServiceTest {
 			//given
 			Long nonExistingPostId = 2L;
 			when(postRepository.findById(nonExistingPostId))
-					.thenReturn(Optional.empty());
+				.thenReturn(Optional.empty());
 
 			//when
 			ThrowingCallable getPostByIdExecutable = () ->
-					postService.getPostDTOById(nonExistingPostId);
+				postService.getPostDTOById(nonExistingPostId);
 
 			//then
 			assertThatThrownBy(getPostByIdExecutable)
-					.isInstanceOf(PostNotFoundException.class)
-					.hasMessageContaining("Post has not been found!");
+				.isInstanceOf(PostNotFoundException.class)
+				.hasMessageContaining("Post has not been found!");
 			verify(postRepository, times(1)).findById(nonExistingPostId);
 		}
 
@@ -88,15 +89,15 @@ class PostServiceTest {
 			//given
 			Long nullId = null;
 			when(postRepository.findById(nullId))
-					.thenThrow(IllegalArgumentException.class);
+				.thenThrow(IllegalArgumentException.class);
 
 			//when
 			ThrowingCallable getPostByIdExecutable = () ->
-					postService.getPostDTOById(nullId);
+				postService.getPostDTOById(nullId);
 
 			//then
 			assertThatThrownBy(getPostByIdExecutable)
-					.isInstanceOf(IllegalArgumentException.class);
+				.isInstanceOf(IllegalArgumentException.class);
 			verify(postRepository, times(1)).findById(nullId);
 		}
 
@@ -105,19 +106,19 @@ class PostServiceTest {
 			//given
 			Post firstPost = makePost();
 			Post secondPost = makePost()
-					.toBuilder()
-					.id(2L)
-					.content("Another post content")
-					.user(makeUser())
-					.build();
+				.toBuilder()
+				.id(2L)
+				.content("Another post content")
+				.user(makeUser())
+				.build();
 
 			List<Post> expectedListOfPosts = List.of(firstPost, secondPost);
 			List<PostDTO> expectedFetchedListOfPosts = expectedListOfPosts
-					.stream()
-					.map(post ->
-							PostDTO.builder().id(post.getId()).content(post.getContent()).build()
-					)
-					.toList();
+				.stream()
+				.map(post ->
+					PostDTO.builder().id(post.getId()).content(post.getContent()).build()
+				)
+				.toList();
 
 			when(postRepository.findAll()).thenReturn(expectedListOfPosts);
 
@@ -126,7 +127,8 @@ class PostServiceTest {
 
 			//then
 			verify(postRepository, times(1)).findAll();
-			assertThat(allPosts).containsExactlyInAnyOrderElementsOf(expectedFetchedListOfPosts);
+			assertThat(allPosts)
+				.containsExactlyInAnyOrderElementsOf(expectedFetchedListOfPosts);
 		}
 
 		@Test
@@ -147,23 +149,23 @@ class PostServiceTest {
 			//given
 			Post firstPost = makePost();
 			Post secondPost = makePost()
-					.toBuilder()
-					.id(2L)
-					.content("Another post content")
-					.build();
+				.toBuilder()
+				.id(2L)
+				.content("Another post content")
+				.build();
 			User user = makeUser()
-					.toBuilder()
-					.posts(Set.of(firstPost, secondPost))
-					.build();
+				.toBuilder()
+				.posts(Set.of(firstPost, secondPost))
+				.build();
 			Long userId = user.getId();
 
 			Collection<Post> expectedListOfPosts = Set.of(firstPost, secondPost);
 			Collection<PostDTO> expectedListOfPostDTOs = expectedListOfPosts
-					.stream()
-					.map(post ->
-							PostDTO.builder().id(post.getId()).content(post.getContent()).build()
-					)
-					.collect(Collectors.toSet());
+				.stream()
+				.map(post ->
+					PostDTO.builder().id(post.getId()).content(post.getContent()).build()
+				)
+				.collect(Collectors.toSet());
 			when(userService.getUserById(userId)).thenReturn(user);
 			//when
 			Collection<PostDTO> fetchedPosts = postService.getAllUserPosts(userId);
@@ -172,8 +174,8 @@ class PostServiceTest {
 			verify(userService, times(1)).getUserById(userId);
 
 			assertThat(fetchedPosts)
-					.usingRecursiveComparison()
-					.isEqualTo(expectedListOfPostDTOs);
+				.usingRecursiveComparison()
+				.isEqualTo(expectedListOfPostDTOs);
 		}
 
 		@Test
@@ -198,16 +200,16 @@ class PostServiceTest {
 			Long userId = 2L;
 
 			when(userService.getUserById(userId))
-					.thenThrow(new UserNotFoundException("User has not been found"));
+				.thenThrow(new UserNotFoundException("User has not been found"));
 
 			//when
 			ThrowingCallable getAllUserPostsExecutable = () ->
-					postService.getAllUserPosts(userId);
+				postService.getAllUserPosts(userId);
 
 			//then
 			assertThatThrownBy(getAllUserPostsExecutable)
-					.isInstanceOf(UserNotFoundException.class)
-					.hasMessageContaining("User has not been found");
+				.isInstanceOf(UserNotFoundException.class)
+				.hasMessageContaining("User has not been found");
 			verify(userService, times(1)).getUserById(userId);
 		}
 
@@ -217,15 +219,15 @@ class PostServiceTest {
 			Long nullUserId = null;
 
 			when(userService.getUserById(nullUserId))
-					.thenThrow(IllegalArgumentException.class);
+				.thenThrow(IllegalArgumentException.class);
 
 			//when
 			ThrowingCallable getAllUserPostsExecutable = () ->
-					postService.getAllUserPosts(nullUserId);
+				postService.getAllUserPosts(nullUserId);
 
 			//then
 			assertThatThrownBy(getAllUserPostsExecutable)
-					.isInstanceOf(IllegalArgumentException.class);
+				.isInstanceOf(IllegalArgumentException.class);
 			verify(userService, times(1)).getUserById(nullUserId);
 		}
 	}
@@ -233,6 +235,7 @@ class PostServiceTest {
 	@Nested
 	@DisplayName("Update post test")
 	class UpdatePostTest {
+
 		@Test
 		void shouldReturnUpdatedPostWhenGivenValidPostDTO() {
 			//given
@@ -240,12 +243,13 @@ class PostServiceTest {
 			PostDTO postDTO = makePostDTO();
 			Long userId = 1L;
 			User expectedUser = makeUser()
-					.toBuilder()
-					.posts(new HashSet<>(Set.of(post)))
-					.build();
+				.toBuilder()
+				.posts(new HashSet<>(Set.of(post)))
+				.build();
 
 			when(userService.getUserById(userId)).thenReturn(expectedUser);
-			when(userService.updateUser(any())).thenAnswer(invocation -> invocation.getArgument(0));
+			when(userService.updateUser(any()))
+				.thenAnswer(invocation -> invocation.getArgument(0));
 
 			//when
 			PostDTO updatedPost = postService.updatePost(postDTO, userId);
@@ -260,25 +264,27 @@ class PostServiceTest {
 		void shouldThrowExceptionWhenGivenPostDTOWithInvalidId() {
 			//given
 			Post post = makePost();
-			PostDTO postDTO = PostDTO.builder()
-					.id(3L)
-					.content("Wrong id post content")
-					.build();
+			PostDTO postDTO = PostDTO
+				.builder()
+				.id(3L)
+				.content("Wrong id post content")
+				.build();
 			Long userId = 1L;
 			User expectedUser = makeUser()
-					.toBuilder()
-					.posts(new HashSet<>(Set.of(post)))
-					.build();
+				.toBuilder()
+				.posts(new HashSet<>(Set.of(post)))
+				.build();
 
 			when(userService.getUserById(userId)).thenReturn(expectedUser);
 
 			//when
-			ThrowingCallable postUpdateExecutable = () -> postService.updatePost(postDTO, userId);
+			ThrowingCallable postUpdateExecutable = () ->
+				postService.updatePost(postDTO, userId);
 
 			//then
 			assertThatThrownBy(postUpdateExecutable)
-					.hasMessage("Post with id=[3] has not been found")
-					.isInstanceOf(PostNotFoundException.class);
+				.hasMessage("Post with id=[3] has not been found")
+				.isInstanceOf(PostNotFoundException.class);
 			verify(userService, times(1)).getUserById(userId);
 			verify(userService, times(0)).updateUser(expectedUser);
 		}
@@ -290,16 +296,16 @@ class PostServiceTest {
 			PostDTO postDTO = makePostDTO();
 
 			when(userService.getUserById(userId))
-					.thenThrow(new UserNotFoundException("User has not been found"));
+				.thenThrow(new UserNotFoundException("User has not been found"));
 
 			//when
 			ThrowingCallable getAllUserPostsExecutable = () ->
-					postService.updatePost(postDTO, userId);
+				postService.updatePost(postDTO, userId);
 
 			//then
 			assertThatThrownBy(getAllUserPostsExecutable)
-					.isInstanceOf(UserNotFoundException.class)
-					.hasMessageContaining("User has not been found");
+				.isInstanceOf(UserNotFoundException.class)
+				.hasMessageContaining("User has not been found");
 			verify(userService, times(1)).getUserById(userId);
 			verify(userService, times(0)).updateUser(any());
 		}
@@ -311,24 +317,82 @@ class PostServiceTest {
 			PostDTO postDTO = makePostDTO();
 
 			when(userService.getUserById(nullUserId))
-					.thenThrow(IllegalArgumentException.class);
+				.thenThrow(IllegalArgumentException.class);
 
 			//when
 			ThrowingCallable getAllUserPostsExecutable = () ->
-					postService.updatePost(postDTO, nullUserId);
+				postService.updatePost(postDTO, nullUserId);
 
 			//then
 			assertThatThrownBy(getAllUserPostsExecutable)
-					.isInstanceOf(IllegalArgumentException.class);
+				.isInstanceOf(IllegalArgumentException.class);
 			verify(userService, times(1)).getUserById(nullUserId);
 			verify(userService, times(0)).updateUser(any());
 		}
 	}
 
-	private PostDTO makePostDTO() {
-		return PostDTO.builder()
-				.id(1L)
-				.content("Sample post content")
+	@Nested
+	@DisplayName("Delete post test")
+	class DeletePostTest {
+
+		@Test
+		void shouldThrowExceptionWhenTryingToDeleteNonExistingPost() {
+			//given
+			Long notExistingPostId = 1L;
+			when(postRepository.findById(notExistingPostId))
+				.thenReturn(Optional.empty());
+
+			//when
+			ThrowingCallable deletePostByIdExecutable = () ->
+				postService.deletePostById(notExistingPostId);
+
+			//then
+			assertThatThrownBy(deletePostByIdExecutable)
+				.isInstanceOf(PostNotFoundException.class)
+				.hasMessageContaining("Post has not been found");
+			verify(postRepository, times(1)).findById(notExistingPostId);
+		}
+
+		@Test
+		void shouldDeletePostWhenPostWithGivenIdExists() {
+			//given
+			Post post = makePost();
+			Long postId = post.getId();
+			User expectedUser = makeUser()
+				.toBuilder()
+				.posts(new HashSet<>(Set.of(post)))
 				.build();
+
+			when(postRepository.findById(postId)).thenReturn(Optional.of(post));
+			when(userService.getUserById(post.getUser().getId()))
+				.thenReturn(expectedUser);
+
+			//when
+			postService.deletePostById(postId);
+
+			//then
+			verify(postRepository, times(1)).findById(postId);
+			verify(postRepository, times(1)).delete(post);
+		}
+
+		@Test
+		void shouldThrowExceptionWhenGivenIdIsNull() {
+			//given
+			Long postId = null;
+			when(postRepository.findById(postId))
+				.thenThrow(IllegalArgumentException.class);
+
+			//when
+			ThrowingCallable deletePostExecutable = () ->
+				postService.deletePostById(postId);
+
+			//then
+			assertThatThrownBy(deletePostExecutable)
+				.isInstanceOf(IllegalArgumentException.class);
+		}
+	}
+
+	private PostDTO makePostDTO() {
+		return PostDTO.builder().id(1L).content("Sample post content").build();
 	}
 }
