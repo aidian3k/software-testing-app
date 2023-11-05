@@ -7,6 +7,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,7 +18,7 @@ import project.eepw.softwaretestingcrud.domain.post.dto.PostCreationDTO;
 import project.eepw.softwaretestingcrud.domain.post.dto.PostDTO;
 import project.eepw.softwaretestingcrud.domain.post.entity.Post;
 import project.eepw.softwaretestingcrud.domain.user.entity.User;
-import project.eepw.softwaretestingcrud.fixtures.UserFixtures;
+import project.eepw.softwaretestingcrud.helpers.UserFixtures;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,12 +26,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static project.eepw.softwaretestingcrud.IntegrationTestConstants.CREATE_POST_URL_WITHOUT_USER_ID;
 import static project.eepw.softwaretestingcrud.IntegrationTestConstants.GET_ALL_POSTS_URL;
+import static project.eepw.softwaretestingcrud.domain.factory.PostFactory.sampleCreatePost;
 
 @SpringBootTest(
 	webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
@@ -160,6 +165,52 @@ class PostIntegrationTest {
 			)
 				.hasSize(2)
 				.containsExactlyInAnyOrderElementsOf(expectedPostContents);
+		}
+
+		@ParameterizedTest
+		@MethodSource(value = "makeValidCreationPosts")
+		void shouldCorrectlyCreateNewPostWhenCreationPostIsValid(
+			PostCreationDTO creationDTO
+		) {
+			// when
+			PostDTO createdPost = makePostCreationRequest(creationDTO, user.getId());
+
+			// then
+			Assertions.assertAll(
+				() ->
+					assertThat(createdPost.getContent())
+						.isEqualTo(creationDTO.getContent()),
+				() -> assertThat(createdPost.getId()).isNotNull()
+			);
+		}
+
+		private static Stream<Arguments> makeValidCreationPosts() {
+			String borderContentValue = IntStream
+				.range(0, 512)
+				.mapToObj(element -> "a")
+				.collect(Collectors.joining());
+			String longerContent = IntStream
+				.range(0, 256)
+				.mapToObj(element -> "b")
+				.collect(Collectors.joining());
+
+			return Stream
+				.<Arguments>builder()
+				.add(Arguments.of(PostCreationDTO.builder().content("").build()))
+				.add(
+					Arguments.of(
+						PostCreationDTO.builder().content("some-new-content").build()
+					)
+				)
+				.add(
+					Arguments.of(
+						PostCreationDTO.builder().content(borderContentValue).build()
+					)
+				)
+				.add(
+					Arguments.of(PostCreationDTO.builder().content(longerContent).build())
+				)
+				.build();
 		}
 	}
 
@@ -410,8 +461,8 @@ class PostIntegrationTest {
 			Set<String> expectedErrorKeys = Set.of("content");
 
 			assertThat(errorResponse.keySet())
-					.hasSize(expectedErrorsSize)
-					.containsExactlyInAnyOrderElementsOf(expectedErrorKeys);
+				.hasSize(expectedErrorsSize)
+				.containsExactlyInAnyOrderElementsOf(expectedErrorKeys);
 		}
 
 		@Test
@@ -451,10 +502,6 @@ class PostIntegrationTest {
 			.surname("Skorupski")
 			.password("some-random-password")
 			.build();
-	}
-
-	private static PostCreationDTO sampleCreatePost() {
-		return PostCreationDTO.builder().content("Some content").build();
 	}
 
 	private PostDTO makePostCreationRequest(
