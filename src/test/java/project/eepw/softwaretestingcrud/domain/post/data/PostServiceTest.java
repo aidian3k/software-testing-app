@@ -346,6 +346,28 @@ class PostServiceTest {
 		}
 
 		@Test
+		void shouldDeletePostWhenPostWithGivenIdExists() {
+			//given
+			Post post = makePost();
+			Long postId = post.getId();
+			User expectedUser = makeUser()
+				.toBuilder()
+				.posts(new HashSet<>(Set.of(post)))
+				.build();
+
+			when(postRepository.findById(postId)).thenReturn(Optional.of(post));
+			when(userService.getUserById(post.getUser().getId()))
+				.thenReturn(expectedUser);
+
+			//when
+			postService.deletePostById(postId);
+
+			//then
+			verify(postRepository, times(1)).findById(postId);
+			verify(postRepository, times(1)).delete(post);
+		}
+
+		@Test
 		void shouldThrowExceptionWhenGivenIdIsNull() {
 			//given
 			Long postId = null;
