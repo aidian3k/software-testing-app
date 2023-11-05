@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "4869bd92-f15e-4034-a5ec-6c51bc6b1fd4",
+		"_postman_id": "7b2dff85-e529-4c73-bbc5-4f8142277ef7",
 		"name": "testing-app",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "30948011"
+		"_exporter_id": "30948364"
 	},
 	"item": [
 		{
@@ -19,12 +19,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"id\": 1,\r\n    \"name\": \"Jan\",\r\n    \"email\": \"jannowak@gmail.com\",\r\n    \"surname\": \"Nowak\",\r\n    \"password\": \"Trudne-Haslo123\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
+					"raw": "{\r\n  \"name\": \"John\",\r\n  \"email\": \"john.doe@example.com\",\r\n  \"surname\": \"Doe\",\r\n  \"password\": \"alamakota\"\r\n}\r\n"
 				},
 				"url": {
 					"raw": "{{base-localhost}}/api/user/create-user",
@@ -41,26 +36,82 @@
 			"response": []
 		},
 		{
-			"name": "GetUserById",
+			"name": "CreatePost",
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"content\": \"Ide do sklepu po bułki\"\r\n}\r\n"
+				},
 				"url": {
-					"raw": "{{base-localhost}}/api/user/{{id}}",
+					"raw": "{{base-localhost}}/api/post/user/2",
 					"host": [
 						"{{base-localhost}}"
 					],
 					"path": [
 						"api",
+						"post",
 						"user",
-						"{{id}}"
+						"2"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "UpdateUSerById",
+			"name": "GetAllPosts",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base-localhost}}/api/post",
+					"host": [
+						"{{base-localhost}}"
+					],
+					"path": [
+						"api",
+						"post"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetAllUserPosts",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "z"
+				},
+				"url": {
+					"raw": "{{base-localhost}}/api/post/user/3",
+					"host": [
+						"{{base-localhost}}"
+					],
+					"path": [
+						"api",
+						"post",
+						"user",
+						"3"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UpdatePostById",
 			"request": {
 				"method": "PUT",
 				"header": [
@@ -72,99 +123,66 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"id\": 1,\r\n    \"name\": \"Jan\",\r\n    \"email\": \"jannowak11@gmail.com\",\r\n    \"surname\": \"Nowak\",\r\n    \"password\": \"Trudne-Haslo123\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
+					"raw": "{\r\n    \"id\": 1,\r\n    \"content\": \"mie było bułek :(\"\r\n}"
 				},
 				"url": {
-					"raw": "{{base-localhost}}/api/user/{{id}}",
+					"raw": "{{base-localhost}}/api/post/user/3",
 					"host": [
 						"{{base-localhost}}"
 					],
 					"path": [
 						"api",
+						"post",
 						"user",
-						"{{id}}"
+						"3"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "GetAllUsers",
+			"name": "GetPostById",
 			"request": {
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{base-localhost}}/api/user",
+					"raw": "{{base-localhost}}/api/post/3",
 					"host": [
 						"{{base-localhost}}"
 					],
 					"path": [
 						"api",
-						"user"
+						"post",
+						"3"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "DeleteUserById",
+			"name": "DeletePostById",
 			"request": {
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "{{base-localhost}}/api/user/:id",
+					"raw": "{{base-localhost}}/api/post/2",
 					"host": [
 						"{{base-localhost}}"
 					],
 					"path": [
 						"api",
-						"user",
-						":id"
-					],
-					"variable": [
-						{
-							"key": "id",
-							"value": "1"
-						}
+						"post",
+						"2"
 					]
 				}
 			},
 			"response": []
-		}
-	],
-	"event": [
-		{
-			"listen": "prerequest",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
-		},
-		{
-			"listen": "test",
-			"script": {
-				"type": "text/javascript",
-				"exec": [
-					""
-				]
-			}
 		}
 	],
 	"variable": [
 		{
 			"key": "base-localhost",
 			"value": "localhost:8080"
-		},
-		{
-			"key": "id",
-			"value": "2"
 		}
 	]
 }
