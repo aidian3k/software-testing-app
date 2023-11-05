@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import project.eepw.softwaretestingcrud.domain.post.dto.PostCreationDTO;
 import project.eepw.softwaretestingcrud.domain.post.dto.PostDTO;
 import project.eepw.softwaretestingcrud.domain.post.entity.Post;
 import project.eepw.softwaretestingcrud.domain.user.data.UserService;
@@ -15,7 +16,6 @@ import project.eepw.softwaretestingcrud.infrastructure.exception.UserNotFoundExc
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -316,6 +316,75 @@ class PostServiceTest {
 			verify(userService, times(1)).getUserById(nullUserId);
 			verify(userService, times(0)).updateUser(any());
 		}
+	}
+
+	@Nested
+	@DisplayName("Create post test")
+	class CreatePostTest {
+		@Test
+		void shouldCreateNewPostWhenGivenValidPostCreationDTO(){
+			//given
+			Post post = makePost();
+			PostCreationDTO postCreationDTO = makePostCreationDTO();
+			Long userId = 1L;
+			User expectedUser = makeUser()
+					.toBuilder()
+					.posts(new HashSet<>(Set.of(post)))
+					.build();
+			when(userService.getUserById(userId)).thenReturn(expectedUser);
+			when(postRepository.save(any())).thenReturn(post);
+
+			//when
+			PostDTO createdPost = postService.createPost(postCreationDTO, userId);
+
+			//then
+			verify(postRepository, times(1)).save(any());
+			verify(userService, times(1)).updateUser(expectedUser);
+			assertThat(createdPost.getId()).isEqualTo(post.getId());
+		}
+
+		@Test
+		void shouldThrowExceptionWhenGivenNonExistingUserID(){
+			PostCreationDTO postCreationDTO = makePostCreationDTO();
+			Long userId = 2L;
+			when(userService.getUserById(userId))
+					.thenThrow(new UserNotFoundException("User has not been found"));
+
+			//when
+			ThrowingCallable getWrongUserPostsExecutable = () ->
+					postService.createPost(postCreationDTO, userId);
+
+			//then
+			assertThatThrownBy(getWrongUserPostsExecutable)
+					.isInstanceOf(UserNotFoundException.class)
+					.hasMessageContaining("User has not been found");
+			verify(userService, times(1)).getUserById(userId);
+		}
+
+		@Test
+		void shouldThrowExceptionWhenGivenNullUserId() {
+			//given
+			PostCreationDTO postCreationDTO = makePostCreationDTO();
+			Long nullUserId = null;
+
+			when(userService.getUserById(nullUserId))
+					.thenThrow(IllegalArgumentException.class);
+
+			//when
+			ThrowingCallable getNullUserPostsExecutable = () ->
+					postService.createPost(postCreationDTO, nullUserId);
+
+			//then
+			assertThatThrownBy(getNullUserPostsExecutable)
+					.isInstanceOf(IllegalArgumentException.class);
+			verify(userService, times(1)).getUserById(nullUserId);
+		}
+	}
+
+	private PostCreationDTO makePostCreationDTO(){
+		return PostCreationDTO.builder()
+				.content("Sample post content")
+				.build();
 	}
 
 	private PostDTO makePostDTO() {
