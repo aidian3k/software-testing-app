@@ -8,8 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import project.eepw.softwaretestingcrud.domain.factory.UserFactory;
 import project.eepw.softwaretestingcrud.domain.user.entity.User;
-import project.eepw.softwaretestingcrud.fixtures.UserFixtures;
+import project.eepw.softwaretestingcrud.helpers.UserFixtures;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,7 +35,7 @@ class UserIntegrationTest {
 		@Test
 		void shouldReturnCorrectUserWhenUserWasJustCreated() {
 			// given
-			User createUserDTO = sampleCreateUser();
+			User createUserDTO = UserFactory.makeUser();
 
 			// when
 			User user = UserFixtures.makeUserCreationRequest(createUserDTO);
@@ -55,7 +56,8 @@ class UserIntegrationTest {
 		@Test
 		void shouldThrowAnExceptionWhenUserPassNullValuesForMandatoryFields() {
 			// given
-			User createUser = sampleCreateUser()
+			User createUser = UserFactory
+				.makeUser()
 				.toBuilder()
 				.name(null)
 				.email(null)
@@ -83,7 +85,8 @@ class UserIntegrationTest {
 		@Test
 		void shouldThrowAnExceptionWhenUserPassesWrongRegexForPasswordAndEmail() {
 			// given
-			User createUser = sampleCreateUser()
+			User createUser = UserFactory
+				.makeUser()
 				.toBuilder()
 				.email("some-email.pl")
 				.password("short")
@@ -109,8 +112,9 @@ class UserIntegrationTest {
 		@Test
 		void shouldCorrectlyAddMoreThanOneUser() {
 			// given
-			User firstUser = sampleCreateUser();
-			User secondUser = sampleCreateUser()
+			User firstUser = UserFactory.makeUser();
+			User secondUser = UserFactory
+				.makeUser()
 				.toBuilder()
 				.name("Dawidek")
 				.surname("Skorup")
@@ -121,7 +125,7 @@ class UserIntegrationTest {
 			User secondCreatedUser = UserFixtures.makeUserCreationRequest(secondUser);
 
 			// then
-			Set<String> expectedUserNames = Set.of("Dawidek", "Adrian");
+			Set<String> expectedUserNames = Set.of("Dawidek", "John");
 
 			assertThat(
 				Set.of(firstCreatedUser.getName(), secondCreatedUser.getName())
@@ -151,7 +155,8 @@ class UserIntegrationTest {
 			List<User> createdUsers = userNames
 				.stream()
 				.map(userName -> {
-					User createdUser = sampleCreateUser()
+					User createdUser = UserFactory
+						.makeUser()
 						.toBuilder()
 						.name(String.valueOf(userName))
 						.build();
@@ -210,7 +215,7 @@ class UserIntegrationTest {
 		@Test
 		void shouldCorrectlyFindUsersByIdWhenUserIsCreated() {
 			// given
-			User createUser = sampleCreateUser();
+			User createUser = UserFactory.makeUser();
 
 			// when
 			User user = UserFixtures.makeUserCreationRequest(createUser);
@@ -274,7 +279,7 @@ class UserIntegrationTest {
 		@Test
 		void shouldDeleteUserWhenUserIsCreatedProperly() {
 			// given
-			User createUser = sampleCreateUser();
+			User createUser = UserFactory.makeUser();
 
 			// when
 			User user = UserFixtures.makeUserCreationRequest(createUser);
@@ -299,7 +304,7 @@ class UserIntegrationTest {
 		@Test
 		void shouldUpdateUserWhenUserIsAlreadyCreated() {
 			// given
-			User userCreateRequest = sampleCreateUser();
+			User userCreateRequest = UserFactory.makeUser();
 			String changedName = "Kajtek";
 			String changedPassword = "some-updated-password";
 
@@ -344,7 +349,7 @@ class UserIntegrationTest {
 		@Test
 		void shouldThrowAnExceptionWhenWantingToChangeUserWithWrongData() {
 			// given
-			User userCreateRequest = sampleCreateUser();
+			User userCreateRequest = UserFactory.makeUser();
 
 			// when
 			User createdUser = UserFixtures.makeUserCreationRequest(
@@ -371,15 +376,5 @@ class UserIntegrationTest {
 			// tear down
 			UserFixtures.makeUserDeletionRequest(createdUser.getId());
 		}
-	}
-
-	private static User sampleCreateUser() {
-		return User
-			.builder()
-			.email("adrian@wp.pl")
-			.name("Adrian")
-			.surname("Nowosielski")
-			.password("some-random-password")
-			.build();
 	}
 }
