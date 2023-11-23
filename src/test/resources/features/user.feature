@@ -1,15 +1,15 @@
 Feature: User Management
 
   Scenario: Getting specific user information by id
-    Given There exists in system the user with id 1 and name Adrian and email adrian@wp.pl
+    Given There exists in system the user with id 1, name "Adrian" and email "adrian@wp.pl"
     When User tries to get user with id 1
-    Then The system should return the user with name Adrian and email adrian@wp.pl
+    Then The system should return the user with name "Adrian" and email "adrian@wp.pl"
     And The system should return 200 response
 
   Scenario: Getting all saved users
     Given In system there are two added users with name Adrian and Cezary
     When The user tries to find all users data
-    Then The system should returna collection of saved users with names Adrian and Cezary
+    Then The system should return collection of saved users with names Adrian and Cezary
     And The system should return 200 response
 
   Scenario: Getting the user by email
