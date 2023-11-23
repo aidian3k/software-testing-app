@@ -14,6 +14,12 @@ public final class IntegrationTestConstants {
 	// post endpoints
 	public static final String GET_ALL_POSTS_URL = "api/post";
 	public static final String CREATE_POST_URL_WITHOUT_USER_ID =
-			GET_ALL_POSTS_URL + "/user/";
+		GET_ALL_POSTS_URL + "/user/";
 
+	public static String createLocalURIWithGivenPortNumber(
+		int portNumber,
+		String wantedEndpoint
+	) {
+		return String.format("http://localhost:%d/%s", portNumber, wantedEndpoint);
+	}
 }
