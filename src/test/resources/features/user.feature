@@ -6,11 +6,15 @@ Feature: User Management
     Then The system should return the user with name "Adrian" and email "adrian@wp.pl"
     And The system should return 200 response
 
-  Scenario: Getting all saved users
-    Given In system there are two added users with name Adrian and Cezary
+  Scenario Outline: Getting all saved users
+    Given In system there are two added users with names <firstName> and <secondName>
     When The user tries to find all users data
-    Then The system should return collection of saved users with names Adrian and Cezary
+    Then The system should return collection of saved users with names <firstName> and <secondName>
     And The system should return 200 response
+
+    Examples:
+      | firstName | secondName |
+      | Adrian    | Cezary     |
 
   Scenario: Getting the user by email
     Given In system exists a user with email adrian@wp.pl
