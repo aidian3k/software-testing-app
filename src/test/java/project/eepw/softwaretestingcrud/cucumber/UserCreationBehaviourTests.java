@@ -1,18 +1,28 @@
 package project.eepw.softwaretestingcrud.cucumber;
 
-import io.cucumber.java.en.And;
+import io.cucumber.java.After;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import project.eepw.softwaretestingcrud.domain.user.entity.User;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static project.eepw.softwaretestingcrud.IntegrationTestConstants.*;
+import static project.eepw.softwaretestingcrud.cucumber.UserCreationBehaviourTests.CommonUserMockInformation.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 public class UserCreationBehaviourTests {
@@ -22,6 +32,8 @@ public class UserCreationBehaviourTests {
 
 	private final RestTemplate restTemplate = new RestTemplate();
 	private ResponseEntity<User> lastUserResponse;
+	private ResponseEntity<User[]> lastUserArrayResponse;
+	private ResponseEntity<Map<String, String>> lastBadRequestResponse;
 
 	@Given(
 		"There exists in system the user with id {int}, name {string} and email {string}"
@@ -79,9 +91,245 @@ public class UserCreationBehaviourTests {
 		);
 	}
 
-	@And("The system should return {int} response")
-	public void theSystemShouldReturnResponse(int responseStatus) {
+	@Given(
+		"In the system there are two added users with names {string} and {string}"
+	)
+	public void inTheSystemThereAreTwoAddedUsersWithNamesAnd(
+		String firstUserName,
+		String secondUserName
+	) {
+		User firstCreatedUser = User
+			.builder()
+			.name(firstUserName)
+			.email(EMAIL)
+			.surname(SURNAME)
+			.password(PASSWORD)
+			.build();
+		User secondCreatedUser = firstCreatedUser
+			.toBuilder()
+			.name(secondUserName)
+			.build();
+
+		Stream
+			.of(firstCreatedUser, secondCreatedUser)
+			.forEach(user -> {
+				lastUserResponse =
+					restTemplate.postForEntity(
+						createLocalURIWithGivenPortNumber(port, CREATE_USER_URL),
+						user,
+						User.class
+					);
+			});
+	}
+
+	@When("The user tries to find all users data")
+	public void theUserTriesToFindAllUsersData() {
+		lastUserArrayResponse =
+			restTemplate.getForEntity(
+				createLocalURIWithGivenPortNumber(port, GET_ALL_USERS_URL),
+				User[].class
+			);
+	}
+
+	@Then(
+		"The system should return a collection of saved users with names {string} and {string}"
+	)
+	public void theSystemShouldReturnACollectionOfSavedUsersWithNamesAnd(
+		String firstUserName,
+		String secondUserName
+	) {
+		List<User> users = Arrays
+			.stream(Objects.requireNonNull(lastUserArrayResponse.getBody()))
+			.toList();
+		List<String> userNames = users.stream().map(User::getName).toList();
+		Assertions.assertAll(() ->
+			assertThat(userNames)
+				.containsExactlyInAnyOrderElementsOf(
+					List.of(firstUserName, secondUserName)
+				)
+		);
+	}
+
+	@Given("In system exists a user with email {string}")
+	public void inSystemExistsAUserWithEmail(String userEmail) {
+		User createdUserWithEmail = createMockUser()
+			.toBuilder()
+			.email(userEmail)
+			.build();
+
+		lastUserResponse =
+			restTemplate.postForEntity(
+				createLocalURIWithGivenPortNumber(port, CREATE_USER_URL),
+				createdUserWithEmail,
+				User.class
+			);
+	}
+
+	@When("The user tries to find the user with email {string}")
+	public void theUserTriesToFindTheUserWithEmail(String userEmail) {
+		String emailUriWithParams = UriComponentsBuilder
+			.fromUriString(
+				createLocalURIWithGivenPortNumber(
+					port,
+					String.format(GET_ALL_USERS_URL + "/email")
+				)
+			)
+			.queryParam("email", userEmail)
+			.toUriString();
+		lastUserResponse =
+			restTemplate.getForEntity(emailUriWithParams, User.class);
+	}
+
+	@Then("The system should return the user with email {string}")
+	public void theSystemShouldReturnTheUserWithEmail(
+		String userEmail
+	) {
+		assertThat(lastUserResponse.getBody().getEmail()).isEqualTo(userEmail);
+	}
+
+	@Given("The user provides valid user data")
+	public void theUserProvidesValidUserData() {}
+
+	@When(
+		"The user tries to add new user with name {string}, surname {string}, email {string} and password {string}"
+	)
+	public void theUserTriesToAddNewUserWithNameSurnameEmailAndPassword(
+		String userName,
+		String surname,
+		String email,
+		String password
+	) {
+		User createdUser = User
+			.builder()
+			.name(userName)
+			.surname(surname)
+			.email(email)
+			.password(password)
+			.build();
+
+		lastUserResponse =
+			restTemplate.postForEntity(
+				createLocalURIWithGivenPortNumber(port, CREATE_USER_URL),
+				createdUser,
+				User.class
+			);
+	}
+
+	@Then(
+		"The system should add new user with assigned name {string}, surname {string}, email {string}, password {string}"
+	)
+	public void theSystemShouldAddNewUserWithAssignedNameSurnameEmailPasswordAndIdId(
+		String userName,
+		String userSurname,
+		String userEmail,
+		String userPassword
+	) {
+		User userResponse = lastUserResponse.getBody();
+
+		Assertions.assertAll(
+			() -> assertThat(userResponse.getName()).isEqualTo(userName),
+			() -> assertThat(userResponse.getSurname()).isEqualTo(userSurname),
+			() -> assertThat(userResponse.getEmail()).isEqualTo(userEmail),
+			() -> assertThat(userResponse.getPassword()).isEqualTo(userPassword)
+		);
+	}
+
+	@Given("The system is ready to add new user")
+	public void theSystemIsReadyToAddNewUser() {}
+
+	@When("The user tries to add new user with wrong {string}")
+	public void theUserTriesToAddNewUserWithWrong(String userEmail) {
+		User creationUser = createMockUser().toBuilder().email(userEmail).build();
+
+		try {
+			restTemplate.postForEntity(
+				createLocalURIWithGivenPortNumber(port, CREATE_USER_URL),
+				creationUser,
+				getErrorObjectType()
+			);
+		} catch (HttpClientErrorException exception) {
+			lastBadRequestResponse =
+				new ResponseEntity<>(
+					exception.getResponseBodyAs(getErrorObjectType()),
+					exception.getStatusCode()
+				);
+		}
+	}
+
+	@Then(
+		"The system should throw an exception with map with key {string} and value {string}"
+	)
+	public void theSystemShouldThrowAnExceptionWithMapWithKeyAndValue(
+		String mapErrorKey,
+		String mapErrorValue
+	) {
+		Map<String, String> errorMap = Objects.requireNonNull(
+			lastBadRequestResponse.getBody()
+		);
+		assertThat(errorMap).containsEntry(mapErrorKey, mapErrorValue);
+	}
+
+	@After
+	public void cleanDatabaseFromUsers() {
+		List<User> users = Arrays
+			.stream(
+				Objects.requireNonNull(
+					restTemplate.getForObject(
+						createLocalURIWithGivenPortNumber(port, GET_ALL_USERS_URL),
+						User[].class
+					)
+				)
+			)
+			.toList();
+
+		users.forEach(user -> {
+			restTemplate.delete(
+				createLocalURIWithGivenPortNumber(
+					port,
+					String.format(GET_ALL_USERS_URL + "/%d", user.getId())
+				)
+			);
+		});
+	}
+
+	@After("@checkForOkResponseSingleUser")
+	public void checkForOkResponseSingleUser() {
 		assertThat(lastUserResponse.getStatusCode().value())
-			.isEqualTo(responseStatus);
+			.isEqualTo(HttpStatus.OK.value());
+	}
+
+	@After("@checkForOkResponseUserArray")
+	public void checkForOkResponseUserArray() {
+		assertThat(lastUserArrayResponse.getStatusCode().value())
+			.isEqualTo(HttpStatus.OK.value());
+	}
+
+	@After("@checkForBadResponseStatus")
+	public void checkForBadRequestResponse() {
+		assertThat(lastBadRequestResponse.getStatusCode().value())
+			.isEqualTo(HttpStatus.BAD_REQUEST.value());
+	}
+
+	@SuppressWarnings("unchecked")
+	private Class<Map<String, String>> getErrorObjectType() {
+		return (Class<Map<String, String>>) ((Class) Map.class);
+	}
+
+	static class CommonUserMockInformation {
+
+		static User createMockUser() {
+			return User
+				.builder()
+				.name(NAME)
+				.password(PASSWORD)
+				.email(EMAIL)
+				.surname(SURNAME)
+				.build();
+		}
+
+		static final String PASSWORD = "sample-password";
+		static final String SURNAME = "sample-surname";
+		static final String NAME = "sample-name";
+		static final String EMAIL = "adrian@wp.pl";
 	}
 }
