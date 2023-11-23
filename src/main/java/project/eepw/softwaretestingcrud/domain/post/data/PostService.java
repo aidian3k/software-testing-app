@@ -37,6 +37,10 @@ public class PostService {
 			.collect(Collectors.toSet());
 	}
 
+	public Post savePost(Post savedPost) {
+		return postRepository.save(savedPost);
+	}
+
 	public Collection<PostDTO> getAllPosts() {
 		return postRepository
 			.findAll()
@@ -67,18 +71,18 @@ public class PostService {
 	public PostDTO updatePost(PostDTO modifiedPost, Long userId) {
 		User foundUser = userService.getUserById(userId);
 		Post foundUserCurrentlyExistingPost = foundUser
-				.getPosts()
-				.stream()
-				.filter(post -> modifiedPost.getId().equals(post.getId()))
-				.findAny()
-				.orElseThrow(() ->
-						new PostNotFoundException(
-								String.format(
-										"Post with id=[%d] has not been found",
-										modifiedPost.getId()
-								)
-						)
-				);
+			.getPosts()
+			.stream()
+			.filter(post -> modifiedPost.getId().equals(post.getId()))
+			.findAny()
+			.orElseThrow(() ->
+				new PostNotFoundException(
+					String.format(
+						"Post with id=[%d] has not been found",
+						modifiedPost.getId()
+					)
+				)
+			);
 		foundUser.getPosts().remove(foundUserCurrentlyExistingPost);
 
 		Post updatedPost = Post
@@ -103,7 +107,7 @@ public class PostService {
 		postRepository.delete(postToDelete);
 	}
 
-	private Post getPostById(Long postId) {
+	public Post getPostById(Long postId) {
 		return postRepository
 			.findById(postId)
 			.orElseThrow(() -> new PostNotFoundException("Post has not been found!"));
