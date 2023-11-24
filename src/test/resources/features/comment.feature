@@ -1,29 +1,43 @@
 Feature: Comment management
   Background:
-    Given There is added user with id 1 and name Adrian
-    And The user with id 1 has the post with id 1 and content some-content
+    Given There is added user with with email "jan@example.com" and name "Jan" and surname "Kowalski" and password "sample-password"
+    And The user has a post with content "some-content"
 
-  Scenario: Fetching comments by post id
-    Given The background criteria are met
-    When The user with id 1 wants to add the comment with content some to the post with id 1
-    Then The system returns the 200 response code to the user
-    And The system returns the comment class with id 1 and content some
+  Scenario: Create a comment to the user's post
+    Given The post does not have comments yet
+    When The user wants to add the comment with content "some-comment-content" to the post
+    Then The system returns the 201 response code to the user
+    And The system returns the comment class with content "some-comment-content"
 
-  Scenario: Fetching all comments
-    Given The user with id 1 exists in database
-    When The user with id 1 wants to search for all comments in the database
-    Then The system returns a list of size 1
+  Scenario: Fetching all comments attached to the post
+    Given The post has a comment with content "some-comment-content"
+    And The post has other comment with content "other-content"
+    When User wants to search for all comments of the post
+    Then The system returns a list of size 2
+    And The list contains comment with content "some-comment-content" and comment with content "other-content"
     And The system returns 200 response code to the user
 
-  Scenario: Creating new comment
-    Given The user with id 1 exists in database
-    And The user with id 1 does not have comments in post with id 1
-    When The user with id 1 wants to add new comment to the post with id 1 with content new-comment
-    Then The system creates new comment with content new-comment
+  Scenario: Fetching all comments
+    Given The first post has a comment with content "first-post-comment"
+    And There is a second post with content "second-post-content"
+    And The second post has a comment with content "second-post-comment"
+    When User wants to search for all comments in the database
+    Then Returned list is of size 2
+    And The list contains comment with content "first-post-comment" and comment with content "second-post-comment"
+    And The system returns 200 response code
+
+#  Scenario: Fetching specific comment
+#    Given Comment with content "some-comment-content" exists in database
+#    When User wants to search for the comment with content "some-comment-content"
+#    Then The system returns the comment with content "some-comment-content"
+#    And Response code is equal to 200
 
   Scenario: Deleting existing comment
-    Given The user with id 1 exists in database
-    And The post with id 1 exists in database
-    And The comment with id 1 is attached to the post with id 1
-    When The user wants to delete the comment with id 1 from the post with id 1
+    Given The post has the comment with content "some-comment-content"
+    When The user wants to delete the comment with content "some-comment-content" from the post
     Then The system returns code 200
+
+  Scenario: Delete not existing comment
+    Given The post does not have any comments
+    When User wants to delete not existing comment with random id 125123 from the post
+    Then The system returns code 404
