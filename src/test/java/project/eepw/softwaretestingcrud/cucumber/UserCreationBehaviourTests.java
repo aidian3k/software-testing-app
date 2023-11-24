@@ -317,13 +317,9 @@ public class UserCreationBehaviourTests {
 		assertThat(errorMap).containsEntry(keyError, errorMessage);
 	}
 
-	@Given("There is added user with id {int} and name {string}")
-	public void thereIsAddedUserWithId(int userId, String userName) {
-		User creationUser = createMockUser()
-			.toBuilder()
-			.id((long) (userId))
-			.name(userName)
-			.build();
+	@Given("There is added user with name {string}")
+	public void thereIsAddedUserWithId(String userName) {
+		User creationUser = createMockUser().toBuilder().name(userName).build();
 
 		lastUserResponse =
 			restTemplate.postForEntity(
@@ -333,14 +329,15 @@ public class UserCreationBehaviourTests {
 			);
 	}
 
-	@When("User tries to update the user with id {int} with name {string}")
-	public void userTriesToUpdateTheUserWithIdWithName(
-		int userId,
-		String updatedUserName
-	) {
+	@When("User tries to update the user with name adrian to name {string}")
+	public void userTriesToUpdateTheUserWithIdWithName(String updatedUserName) {
+		long updateUserId = Objects
+			.requireNonNull(lastUserResponse.getBody())
+			.getId();
+
 		User updatedUser = createMockUser()
 			.toBuilder()
-			.id((long) userId)
+			.id(updateUserId)
 			.name(updatedUserName)
 			.build();
 		HttpEntity<User> httpEntity = new HttpEntity<>(updatedUser);
@@ -349,7 +346,7 @@ public class UserCreationBehaviourTests {
 			restTemplate.exchange(
 				createLocalURIWithGivenPortNumber(
 					port,
-					GET_ALL_USERS_URL + "/" + userId
+					GET_ALL_USERS_URL + "/" + updateUserId
 				),
 				HttpMethod.PUT,
 				httpEntity,
@@ -357,13 +354,13 @@ public class UserCreationBehaviourTests {
 			);
 	}
 
-	@Then("The system updates the username with id {int} to {string}")
-	public void theSystemUpdatesTheUsernameWithIdTo(
-		int userId,
-		String updatedUserName
-	) {
+	@Then("The system updates user's the username to {string}")
+	public void theSystemUpdatesTheUsernameWithIdTo(String updatedUserName) {
 		ResponseEntity<User> updatedUserResponse = restTemplate.getForEntity(
-			createLocalURIWithGivenPortNumber(port, GET_ALL_USERS_URL + "/" + userId),
+			createLocalURIWithGivenPortNumber(
+				port,
+				GET_ALL_USERS_URL + "/" + lastUserResponse.getBody().getId()
+			),
 			User.class
 		);
 		User updatedUserBody = updatedUserResponse.getBody();
@@ -373,12 +370,9 @@ public class UserCreationBehaviourTests {
 			.isEqualTo(HttpStatus.OK.value());
 	}
 
-	@Given("There is added user with id {int}")
-	public void thereIsAddedUserWithId(int userId) {
-		User creationUser = createMockUser()
-			.toBuilder()
-			.id((long) (userId))
-			.build();
+	@Given("There is added user")
+	public void thereIsAddedUserWithId() {
+		User creationUser = createMockUser().toBuilder().build();
 
 		lastUserResponse =
 			restTemplate.postForEntity(
@@ -388,13 +382,13 @@ public class UserCreationBehaviourTests {
 			);
 	}
 
-	@When("The user tries to delete the user with id {int}")
-	public void theUserTriesToDeleteTheUserWithId(int userId) {
+	@When("The user tries to delete existing the user in database")
+	public void theUserTriesToDeleteTheUserWithId() {
 		lastVoidResponse =
 			restTemplate.exchange(
 				createLocalURIWithGivenPortNumber(
 					port,
-					GET_ALL_USERS_URL + "/" + userId
+					GET_ALL_USERS_URL + "/" + lastUserResponse.getBody().getId()
 				),
 				HttpMethod.DELETE,
 				null,
@@ -402,10 +396,8 @@ public class UserCreationBehaviourTests {
 			);
 	}
 
-	@Then(
-		"The system correctly deletes the user with id {int} from database with status code OK"
-	)
-	public void theSystemCorrectlyDeletesTheUserWithIdFromDatabase(int userId) {
+	@Then("The system should return OK response status code")
+	public void theSystemCorrectlyDeletesTheUserWithIdFromDatabase() {
 		assertThat(lastVoidResponse.getStatusCode().value())
 			.isEqualTo(HttpStatus.OK.value());
 	}

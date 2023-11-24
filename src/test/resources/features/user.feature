@@ -65,9 +65,9 @@ Feature: User Management
 
   @checkForOkResponseSingleUser
   Scenario: Updating an existing user
-    Given There is added user with id 1 and name "adrian"
-    When User tries to update the user with id 1 with name "adi"
-    Then The system updates the username with id 1 to "adi"
+    Given There is added user with name "adrian"
+    When User tries to update the user with name adrian to name "adi"
+    Then The system updates user's the username to "adi"
 
   Scenario Outline: Deleting non existing user
     Given The system database does not have user with id <invalidId>
@@ -82,6 +82,6 @@ Feature: User Management
 
 
   Scenario: Deleting existing user by id
-    Given There is added user with id 1
-    When The user tries to delete the user with id 1
-    Then The system correctly deletes the user with id 1 from database with status code OK
+    Given There is added user
+    When The user tries to delete existing the user in database
+    Then The system should return OK response status code
