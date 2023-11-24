@@ -52,28 +52,36 @@ Feature: User Management
       | aws   |
       | not-an-email |
 
-  Scenario: Trying to create user with too long name
+  @checkForBadResponseStatus
+  Scenario Outline: Trying to create user with too long name
     Given The system is ready to add new user
-    Then The user tries to add the user with the username which have length of 266 characters
-    Then The system should throw an exception
-    And The system should return 400 code response
-    And The system should not add the user to database
+    When The user tries to add the user with the username which have length of "<lengthOfUserName>" characters
+    Then The system should throw an exception with map with key "name" and value containing string "size must be between 0 and 255"
+    Examples:
+      | lengthOfUserName |
+      | 256              |
+      | 300              |
+      | 1024             |
 
+  @checkForOkResponseSingleUser
   Scenario: Updating an existing user
-    Given There is added user with id 3
-    When User tries to update the user with id 3 with name adi
-    Then The system updates the username with id 3 to adi
-    And The system returns the 200 code response
+    Given There is added user with id 1 and name "adrian"
+    When User tries to update the user with id 1 with name "adi"
+    Then The system updates the username with id 1 to "adi"
 
-  Scenario: Deleting non existing user
-    Given The system database does not have user with id 100
-    When The user tries to delete a user with the invalid id 100
+  Scenario Outline: Deleting non existing user
+    Given The system database does not have user with id <invalidId>
+    When The user tries to delete a user with the invalid id "<invalidId>"
     Then The system should return an error indicating the user was not found
-    And The system should throw an exception
-    And The system should return 400 code response
+
+    Examples:
+    | invalidId |
+    | 1024      |
+    | 1025      |
+    | -50       |
+
 
   Scenario: Deleting existing user by id
     Given There is added user with id 1
     When The user tries to delete the user with id 1
-    Then The system correctly deletes the user with id 1 from database
-    And The system returns 200 response code to the user
+    Then The system correctly deletes the user with id 1 from database with status code OK

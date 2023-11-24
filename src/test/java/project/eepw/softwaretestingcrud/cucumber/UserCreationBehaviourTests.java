@@ -7,6 +7,8 @@ import io.cucumber.java.en.When;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
@@ -18,6 +20,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,6 +38,7 @@ public class UserCreationBehaviourTests {
 	private ResponseEntity<User> lastUserResponse;
 	private ResponseEntity<User[]> lastUserArrayResponse;
 	private ResponseEntity<Map<String, String>> lastBadRequestResponse;
+	private ResponseEntity<Void> lastVoidResponse;
 
 	@Given(
 		"There exists in system the user with id {int}, name {string} and email {string}"
@@ -181,9 +186,7 @@ public class UserCreationBehaviourTests {
 	}
 
 	@Then("The system should return the user with email {string}")
-	public void theSystemShouldReturnTheUserWithEmail(
-		String userEmail
-	) {
+	public void theSystemShouldReturnTheUserWithEmail(String userEmail) {
 		assertThat(lastUserResponse.getBody().getEmail()).isEqualTo(userEmail);
 	}
 
@@ -269,6 +272,144 @@ public class UserCreationBehaviourTests {
 		assertThat(errorMap).containsEntry(mapErrorKey, mapErrorValue);
 	}
 
+	@When(
+		"The user tries to add the user with the username which have length of {string} characters"
+	)
+	public void theUserTriesToAddTheUserWithTheUsernameWhichHaveLengthOfCharacters(
+		String stringifyNumberOfCharacters
+	) {
+		int numberOfCharacters = Integer.parseInt(stringifyNumberOfCharacters);
+		String wrongUserName = IntStream
+			.range(0, numberOfCharacters)
+			.mapToObj(element -> "a")
+			.collect(Collectors.joining());
+		User creationUser = createMockUser()
+			.toBuilder()
+			.name(wrongUserName)
+			.build();
+
+		try {
+			restTemplate.postForEntity(
+				createLocalURIWithGivenPortNumber(port, CREATE_USER_URL),
+				creationUser,
+				getErrorObjectType()
+			);
+		} catch (HttpClientErrorException exception) {
+			lastBadRequestResponse =
+				new ResponseEntity<>(
+					exception.getResponseBodyAs(getErrorObjectType()),
+					exception.getStatusCode()
+				);
+		}
+	}
+
+	@Then(
+		"The system should throw an exception with map with key {string} and value containing string {string}"
+	)
+	public void theSystemShouldThrowAnExceptionWithMapWithKeyAndValueContainingString(
+		String keyError,
+		String errorMessage
+	) {
+		Map<String, String> errorMap = Objects.requireNonNull(
+			lastBadRequestResponse.getBody()
+		);
+
+		assertThat(errorMap).containsEntry(keyError, errorMessage);
+	}
+
+	@Given("There is added user with id {int} and name {string}")
+	public void thereIsAddedUserWithId(int userId, String userName) {
+		User creationUser = createMockUser()
+			.toBuilder()
+			.id((long) (userId))
+			.name(userName)
+			.build();
+
+		lastUserResponse =
+			restTemplate.postForEntity(
+				createLocalURIWithGivenPortNumber(port, CREATE_USER_URL),
+				creationUser,
+				User.class
+			);
+	}
+
+	@When("User tries to update the user with id {int} with name {string}")
+	public void userTriesToUpdateTheUserWithIdWithName(
+		int userId,
+		String updatedUserName
+	) {
+		User updatedUser = createMockUser()
+			.toBuilder()
+			.id((long) userId)
+			.name(updatedUserName)
+			.build();
+		HttpEntity<User> httpEntity = new HttpEntity<>(updatedUser);
+
+		lastUserResponse =
+			restTemplate.exchange(
+				createLocalURIWithGivenPortNumber(
+					port,
+					GET_ALL_USERS_URL + "/" + userId
+				),
+				HttpMethod.PUT,
+				httpEntity,
+				User.class
+			);
+	}
+
+	@Then("The system updates the username with id {int} to {string}")
+	public void theSystemUpdatesTheUsernameWithIdTo(
+		int userId,
+		String updatedUserName
+	) {
+		ResponseEntity<User> updatedUserResponse = restTemplate.getForEntity(
+			createLocalURIWithGivenPortNumber(port, GET_ALL_USERS_URL + "/" + userId),
+			User.class
+		);
+		User updatedUserBody = updatedUserResponse.getBody();
+
+		assertThat(updatedUserBody.getName()).isEqualTo(updatedUserName);
+		assertThat(updatedUserResponse.getStatusCode().value())
+			.isEqualTo(HttpStatus.OK.value());
+	}
+
+	@Given("There is added user with id {int}")
+	public void thereIsAddedUserWithId(int userId) {
+		User creationUser = createMockUser()
+			.toBuilder()
+			.id((long) (userId))
+			.build();
+
+		lastUserResponse =
+			restTemplate.postForEntity(
+				createLocalURIWithGivenPortNumber(port, CREATE_USER_URL),
+				creationUser,
+				User.class
+			);
+	}
+
+	@When("The user tries to delete the user with id {int}")
+	public void theUserTriesToDeleteTheUserWithId(int userId) {
+		lastVoidResponse =
+			restTemplate.exchange(
+				createLocalURIWithGivenPortNumber(
+					port,
+					GET_ALL_USERS_URL + "/" + userId
+				),
+				HttpMethod.DELETE,
+				null,
+				Void.class
+			);
+	}
+
+	@Then(
+		"The system correctly deletes the user with id {int} from database with status code OK"
+	)
+	public void theSystemCorrectlyDeletesTheUserWithIdFromDatabase(int userId) {
+		assertThat(lastVoidResponse.getStatusCode().value())
+			.isEqualTo(HttpStatus.OK.value());
+	}
+
 	@After
 	public void cleanDatabaseFromUsers() {
 		List<User> users = Arrays
@@ -313,6 +454,34 @@ public class UserCreationBehaviourTests {
 	@SuppressWarnings("unchecked")
 	private Class<Map<String, String>> getErrorObjectType() {
 		return (Class<Map<String, String>>) ((Class) Map.class);
+	}
+
+	@Given("The system database does not have user with id {int}")
+	public void theSystemDatabaseDoesNotHaveUserWithId(int userId) {}
+
+	@When("The user tries to delete a user with the invalid id {string}")
+	public void theUserTriesToDeleteAUserWithTheInvalidId(
+		String stringifyUserId
+	) {
+		try {
+			restTemplate.exchange(
+				createLocalURIWithGivenPortNumber(
+					port,
+					GET_ALL_USERS_URL + "/" + stringifyUserId
+				),
+				HttpMethod.DELETE,
+				null,
+				Void.class
+			);
+		} catch (HttpClientErrorException exception) {
+			lastVoidResponse = new ResponseEntity<>(exception.getStatusCode());
+		}
+	}
+
+	@Then("The system should return an error indicating the user was not found")
+	public void theSystemShouldReturnAnErrorIndicatingTheUserWasNotFound() {
+		assertThat(lastVoidResponse.getStatusCode().value())
+			.isEqualTo(HttpStatus.NOT_FOUND.value());
 	}
 
 	static class CommonUserMockInformation {
