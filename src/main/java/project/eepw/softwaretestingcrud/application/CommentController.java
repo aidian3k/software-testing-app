@@ -1,5 +1,6 @@
 package project.eepw.softwaretestingcrud.application;
 
+import java.util.Collection;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,8 +16,6 @@ import project.eepw.softwaretestingcrud.domain.comment.data.CommentService;
 import project.eepw.softwaretestingcrud.domain.comment.dto.CommentCreationDTO;
 import project.eepw.softwaretestingcrud.domain.comment.dto.CommentDTO;
 import project.eepw.softwaretestingcrud.domain.comment.entity.Comment;
-
-import java.util.Collection;
 
 @RestController
 @RequiredArgsConstructor

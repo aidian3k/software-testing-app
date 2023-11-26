@@ -1,10 +1,16 @@
 package project.eepw.softwaretestingcrud.cucumber;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static project.eepw.softwaretestingcrud.IntegrationTestConstants.*;
+
 import io.cucumber.java.After;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpMethod;
@@ -17,13 +23,6 @@ import project.eepw.softwaretestingcrud.domain.post.dto.PostCreationDTO;
 import project.eepw.softwaretestingcrud.domain.post.dto.PostDTO;
 import project.eepw.softwaretestingcrud.domain.post.entity.Post;
 import project.eepw.softwaretestingcrud.domain.user.entity.User;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static project.eepw.softwaretestingcrud.IntegrationTestConstants.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 public class CommentBehaviourTests {

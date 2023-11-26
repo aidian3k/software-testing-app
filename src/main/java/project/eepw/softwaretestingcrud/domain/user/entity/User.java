@@ -11,6 +11,8 @@ import jakarta.persistence.SequenceGenerator;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -20,9 +22,6 @@ import lombok.Setter;
 import project.eepw.softwaretestingcrud.domain.comment.entity.Comment;
 import project.eepw.softwaretestingcrud.domain.post.entity.Post;
 import project.eepw.softwaretestingcrud.infrastructure.validation.validators.Password;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity(name = "users")
 @AllArgsConstructor

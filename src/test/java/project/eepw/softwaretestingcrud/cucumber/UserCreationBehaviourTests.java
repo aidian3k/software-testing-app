@@ -1,8 +1,19 @@
 package project.eepw.softwaretestingcrud.cucumber;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static project.eepw.softwaretestingcrud.IntegrationTestConstants.*;
+import static project.eepw.softwaretestingcrud.cucumber.UserCreationBehaviourTests.CommonUserMockInformation.*;
+
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -14,18 +25,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import project.eepw.softwaretestingcrud.domain.user.entity.User;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static project.eepw.softwaretestingcrud.IntegrationTestConstants.*;
-import static project.eepw.softwaretestingcrud.cucumber.UserCreationBehaviourTests.CommonUserMockInformation.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 public class UserCreationBehaviourTests {

@@ -1,5 +1,15 @@
 package project.eepw.softwaretestingcrud.domain.user.data;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static project.eepw.softwaretestingcrud.domain.factory.UserFactory.makeUser;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,295 +19,291 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import project.eepw.softwaretestingcrud.domain.user.entity.User;
 import project.eepw.softwaretestingcrud.infrastructure.exception.UserNotFoundException;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static project.eepw.softwaretestingcrud.domain.factory.UserFactory.makeUser;
-
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
-  @Mock
-  private UserRepository userRepository;
-  @InjectMocks
-  private UserService userService;
+	@Mock
+	private UserRepository userRepository;
 
-  @Test
-  void shouldReturnTheUserWhenUserWithThatIdIsInDB() {
-    //given
-    User user = makeUser();
-    Long id = user.getId();
+	@InjectMocks
+	private UserService userService;
 
-    when(userRepository.findById(id)).thenReturn(Optional.of(user));
+	@Test
+	void shouldReturnTheUserWhenUserWithThatIdIsInDB() {
+		//given
+		User user = makeUser();
+		Long id = user.getId();
 
-    //when
-    User fetchedUser = userService.getUserById(id);
+		when(userRepository.findById(id)).thenReturn(Optional.of(user));
 
-    //then
-    verify(userRepository, times(1)).findById(id);
-    assertThat(fetchedUser)
-        .usingRecursiveComparison()
-        .isEqualTo(user);
-  }
+		//when
+		User fetchedUser = userService.getUserById(id);
 
-  @Test
-  void shouldThrowExceptionWhenUserWithThatIdIsNotInDB() {
-    //given
-    Long notExistingUserId = 1L;
-    when(userRepository.findById(notExistingUserId)).thenReturn(Optional.empty());
+		//then
+		verify(userRepository, times(1)).findById(id);
+		assertThat(fetchedUser).usingRecursiveComparison().isEqualTo(user);
+	}
 
-    //when
-    ThrowingCallable getUserByIdExecutable = () -> userService.getUserById(notExistingUserId);
+	@Test
+	void shouldThrowExceptionWhenUserWithThatIdIsNotInDB() {
+		//given
+		Long notExistingUserId = 1L;
+		when(userRepository.findById(notExistingUserId))
+			.thenReturn(Optional.empty());
 
-    //then
-    assertThatThrownBy(getUserByIdExecutable)
-        .isInstanceOf(UserNotFoundException.class)
-        .hasMessageContaining("User has not been found");
-    verify(userRepository, times(1)).findById(notExistingUserId);
-  }
+		//when
+		ThrowingCallable getUserByIdExecutable = () ->
+			userService.getUserById(notExistingUserId);
 
-  @Test
-  void shouldThrowExceptionWhenProvidedIdIsNull() {
-    //given
-    Long nullId = null;
-    when(userRepository.findById(nullId)).thenThrow(IllegalArgumentException.class);
+		//then
+		assertThatThrownBy(getUserByIdExecutable)
+			.isInstanceOf(UserNotFoundException.class)
+			.hasMessageContaining("User has not been found");
+		verify(userRepository, times(1)).findById(notExistingUserId);
+	}
 
-    //when
-    ThrowingCallable getUserByIdExecutable = () -> userService.getUserById(nullId);
+	@Test
+	void shouldThrowExceptionWhenProvidedIdIsNull() {
+		//given
+		Long nullId = null;
+		when(userRepository.findById(nullId))
+			.thenThrow(IllegalArgumentException.class);
 
-    //then
-    assertThatThrownBy(getUserByIdExecutable)
-        .isInstanceOf(IllegalArgumentException.class);
-    verify(userRepository, times(1)).findById(nullId);
-  }
+		//when
+		ThrowingCallable getUserByIdExecutable = () ->
+			userService.getUserById(nullId);
 
-  @Test
-  void shouldReturnAllUsersWhenGetAllUsersInvoked() {
-    //given
-    User user1 = makeUser();
-    User user2 = makeUser().toBuilder()
-        .id(2L)
-        .name("James")
-        .email("u2@example.com")
-        .surname("Jackson")
-        .password("password")
-        .build();
+		//then
+		assertThatThrownBy(getUserByIdExecutable)
+			.isInstanceOf(IllegalArgumentException.class);
+		verify(userRepository, times(1)).findById(nullId);
+	}
 
-    when(userRepository.findAll()).thenReturn(List.of(user1, user2));
+	@Test
+	void shouldReturnAllUsersWhenGetAllUsersInvoked() {
+		//given
+		User user1 = makeUser();
+		User user2 = makeUser()
+			.toBuilder()
+			.id(2L)
+			.name("James")
+			.email("u2@example.com")
+			.surname("Jackson")
+			.password("password")
+			.build();
 
-    //when
-    Collection<User> allUsers = userService.getAllUsers();
+		when(userRepository.findAll()).thenReturn(List.of(user1, user2));
 
-    //then
-    verify(userRepository, times(1)).findAll();
-    assertThat(allUsers)
-        .usingRecursiveComparison()
-        .isEqualTo(List.of(user1, user2));
-  }
+		//when
+		Collection<User> allUsers = userService.getAllUsers();
 
-  @Test
-  void shouldReturnEmptyCollectionWhenNoDataIsPresentInDB() {
-    //given
-    when(userRepository.findAll()).thenReturn(Collections.emptyList());
+		//then
+		verify(userRepository, times(1)).findAll();
+		assertThat(allUsers)
+			.usingRecursiveComparison()
+			.isEqualTo(List.of(user1, user2));
+	}
 
-    //when
-    Collection<User> allUsers = userService.getAllUsers();
+	@Test
+	void shouldReturnEmptyCollectionWhenNoDataIsPresentInDB() {
+		//given
+		when(userRepository.findAll()).thenReturn(Collections.emptyList());
 
-    //then
-    verify(userRepository, times(1)).findAll();
-    assertThat(allUsers)
-        .usingRecursiveComparison()
-        .isEqualTo(Collections.emptyList());
-  }
+		//when
+		Collection<User> allUsers = userService.getAllUsers();
 
-  @Test
-  void shouldReturnUserWhenUserWithProvidedEmailIsInDB() {
-    //given
-    User user = makeUser();
-    String email = user.getEmail();
-    when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+		//then
+		verify(userRepository, times(1)).findAll();
+		assertThat(allUsers)
+			.usingRecursiveComparison()
+			.isEqualTo(Collections.emptyList());
+	}
 
-    //when
-    User fetchedUser = userService.getUserByEmail(email);
+	@Test
+	void shouldReturnUserWhenUserWithProvidedEmailIsInDB() {
+		//given
+		User user = makeUser();
+		String email = user.getEmail();
+		when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
-    //then
-    verify(userRepository, times(1)).findByEmail(email);
-    assertThat(fetchedUser)
-        .usingRecursiveComparison()
-        .isEqualTo(user);
-  }
+		//when
+		User fetchedUser = userService.getUserByEmail(email);
 
-  @Test
-  void shouldThrowExceptionWhenProvidedEmailIsNotInDB() {
-    //given
-    String notExistingEmail = "notexisting@example.com";
-    when(userRepository.findByEmail(notExistingEmail)).thenReturn(Optional.empty());
+		//then
+		verify(userRepository, times(1)).findByEmail(email);
+		assertThat(fetchedUser).usingRecursiveComparison().isEqualTo(user);
+	}
 
-    //when
-    ThrowingCallable getUserByEmailExecutable = () -> userService.getUserByEmail(notExistingEmail);
+	@Test
+	void shouldThrowExceptionWhenProvidedEmailIsNotInDB() {
+		//given
+		String notExistingEmail = "notexisting@example.com";
+		when(userRepository.findByEmail(notExistingEmail))
+			.thenReturn(Optional.empty());
 
-    //then
-    assertThatThrownBy(getUserByEmailExecutable)
-        .isInstanceOf(UserNotFoundException.class)
-        .hasMessageContaining("User has not been found!");
-    verify(userRepository, times(1)).findByEmail(notExistingEmail);
-  }
+		//when
+		ThrowingCallable getUserByEmailExecutable = () ->
+			userService.getUserByEmail(notExistingEmail);
 
-  @Test
-  void shouldThrowExceptionWhenProvidedEmailIsNull() {
-    //given
-    String nullEmail = null;
-    when(userRepository.findByEmail(nullEmail)).thenThrow(IllegalArgumentException.class);
+		//then
+		assertThatThrownBy(getUserByEmailExecutable)
+			.isInstanceOf(UserNotFoundException.class)
+			.hasMessageContaining("User has not been found!");
+		verify(userRepository, times(1)).findByEmail(notExistingEmail);
+	}
 
-    //when
-    ThrowingCallable getUserByEmailExecutable = () -> userService.getUserByEmail(nullEmail);
+	@Test
+	void shouldThrowExceptionWhenProvidedEmailIsNull() {
+		//given
+		String nullEmail = null;
+		when(userRepository.findByEmail(nullEmail))
+			.thenThrow(IllegalArgumentException.class);
 
-    //then
-    assertThatThrownBy(getUserByEmailExecutable)
-        .isInstanceOf(IllegalArgumentException.class);
-    verify(userRepository, times(1)).findByEmail(nullEmail);
-  }
+		//when
+		ThrowingCallable getUserByEmailExecutable = () ->
+			userService.getUserByEmail(nullEmail);
 
-  @Test
-  void shouldCreateNewUserWhenGivenUserHasAllRequiredData() {
-    //given
-    User user = makeUser().toBuilder()
-        .id(null).build();
-    User dbUser = user.toBuilder()
-        .id(5L).build();
-    when(userRepository.save(user)).thenReturn(dbUser);
+		//then
+		assertThatThrownBy(getUserByEmailExecutable)
+			.isInstanceOf(IllegalArgumentException.class);
+		verify(userRepository, times(1)).findByEmail(nullEmail);
+	}
 
-    //when
-    User createdUser = userService.createUser(user);
+	@Test
+	void shouldCreateNewUserWhenGivenUserHasAllRequiredData() {
+		//given
+		User user = makeUser().toBuilder().id(null).build();
+		User dbUser = user.toBuilder().id(5L).build();
+		when(userRepository.save(user)).thenReturn(dbUser);
 
-    //then
-    verify(userRepository, times(1)).save(user);
-    assertThat(createdUser)
-        .usingRecursiveComparison()
-        .isEqualTo(dbUser);
-  }
+		//when
+		User createdUser = userService.createUser(user);
 
-  @Test
-  void shouldThrowExceptionWhenGivenUserIsNull() {
-    //given
-    User nullUser = null;
-    when(userRepository.save(nullUser)).thenThrow(IllegalArgumentException.class);
+		//then
+		verify(userRepository, times(1)).save(user);
+		assertThat(createdUser).usingRecursiveComparison().isEqualTo(dbUser);
+	}
 
-    //when
-    ThrowingCallable createUserExecutable = () -> userService.createUser(nullUser);
+	@Test
+	void shouldThrowExceptionWhenGivenUserIsNull() {
+		//given
+		User nullUser = null;
+		when(userRepository.save(nullUser))
+			.thenThrow(IllegalArgumentException.class);
 
-    //then
-    assertThatThrownBy(createUserExecutable)
-        .isInstanceOf(IllegalArgumentException.class);
-    verify(userRepository, times(1)).save(nullUser);
-  }
+		//when
+		ThrowingCallable createUserExecutable = () ->
+			userService.createUser(nullUser);
 
-  @Test
-  void shouldUpdateUserDataWhenGivenUserAlreadyExists() {
-    //given
-    User user = makeUser();
-    Long userId = user.getId();
-    User toUpdate = user.toBuilder()
-        .name("James")
-        .email("james@example.com")
-        .surname("Jackson")
-        .password("123")
-        .build();
-    when(userRepository.existsById(userId)).thenReturn(true);
-    when(userRepository.save(toUpdate)).thenReturn(toUpdate);
+		//then
+		assertThatThrownBy(createUserExecutable)
+			.isInstanceOf(IllegalArgumentException.class);
+		verify(userRepository, times(1)).save(nullUser);
+	}
 
-    //when
-    User updatedUser = userService.updateUser(toUpdate);
+	@Test
+	void shouldUpdateUserDataWhenGivenUserAlreadyExists() {
+		//given
+		User user = makeUser();
+		Long userId = user.getId();
+		User toUpdate = user
+			.toBuilder()
+			.name("James")
+			.email("james@example.com")
+			.surname("Jackson")
+			.password("123")
+			.build();
+		when(userRepository.existsById(userId)).thenReturn(true);
+		when(userRepository.save(toUpdate)).thenReturn(toUpdate);
 
-    //then
-    verify(userRepository, times(1)).existsById(toUpdate.getId());
-    verify(userRepository, times(1)).save(toUpdate);
-    assertThat(updatedUser)
-        .usingRecursiveComparison()
-        .isEqualTo(toUpdate);
-  }
+		//when
+		User updatedUser = userService.updateUser(toUpdate);
 
-  @Test
-  void shouldThrowExceptionOnUpdateWhenGivenUserDoesNotExist() {
-    //given
-    User notExistingUser = makeUser();
+		//then
+		verify(userRepository, times(1)).existsById(toUpdate.getId());
+		verify(userRepository, times(1)).save(toUpdate);
+		assertThat(updatedUser).usingRecursiveComparison().isEqualTo(toUpdate);
+	}
 
-    when(userRepository.existsById(notExistingUser.getId())).thenReturn(false);
+	@Test
+	void shouldThrowExceptionOnUpdateWhenGivenUserDoesNotExist() {
+		//given
+		User notExistingUser = makeUser();
 
-    //when
-    ThrowingCallable updateUserExecutable = () -> userService.updateUser(notExistingUser);
+		when(userRepository.existsById(notExistingUser.getId())).thenReturn(false);
 
-    //then
-    assertThatThrownBy(updateUserExecutable)
-        .isInstanceOf(UserNotFoundException.class)
-        .hasMessageContaining("User has not been found!");
-    verify(userRepository, times(1)).existsById(notExistingUser.getId());
-    verify(userRepository, times(0)).save(notExistingUser);
-  }
+		//when
+		ThrowingCallable updateUserExecutable = () ->
+			userService.updateUser(notExistingUser);
 
-  @Test
-  void shouldThrowExceptionOnUpdateWhenGivenUserIsNull() {
-    //given
-    User nullUser = null;
+		//then
+		assertThatThrownBy(updateUserExecutable)
+			.isInstanceOf(UserNotFoundException.class)
+			.hasMessageContaining("User has not been found!");
+		verify(userRepository, times(1)).existsById(notExistingUser.getId());
+		verify(userRepository, times(0)).save(notExistingUser);
+	}
 
-    //when
-    ThrowingCallable updateUserExecutable = () -> userService.updateUser(nullUser);
+	@Test
+	void shouldThrowExceptionOnUpdateWhenGivenUserIsNull() {
+		//given
+		User nullUser = null;
 
-    //then
-    assertThatThrownBy(updateUserExecutable)
-        .isInstanceOf(IllegalArgumentException.class);
-    verify(userRepository, times(0)).existsById(any());
-    verify(userRepository, times(0)).save(nullUser);
-  }
+		//when
+		ThrowingCallable updateUserExecutable = () ->
+			userService.updateUser(nullUser);
 
-  @Test
-  void shouldDeleteUserWhenUserWithGivenIdExists() {
-    //given
-    User user = makeUser();
-    Long id = user.getId();
-    when(userRepository.findById(id)).thenReturn(Optional.of(user));
+		//then
+		assertThatThrownBy(updateUserExecutable)
+			.isInstanceOf(IllegalArgumentException.class);
+		verify(userRepository, times(0)).existsById(any());
+		verify(userRepository, times(0)).save(nullUser);
+	}
 
-    //when
-    userService.deleteUserById(id);
+	@Test
+	void shouldDeleteUserWhenUserWithGivenIdExists() {
+		//given
+		User user = makeUser();
+		Long id = user.getId();
+		when(userRepository.findById(id)).thenReturn(Optional.of(user));
 
-    //then
-    verify(userRepository, times(1)).findById(id);
-    verify(userRepository, times(1)).delete(user);
-  }
+		//when
+		userService.deleteUserById(id);
 
-  @Test
-  void shouldThrowExceptionWhenTryingToDeleteNotExistingUser() {
-    //given
-    Long id = 1L;
-    when(userRepository.findById(id)).thenReturn(Optional.empty());
+		//then
+		verify(userRepository, times(1)).findById(id);
+		verify(userRepository, times(1)).delete(user);
+	}
 
-    //when
-    ThrowingCallable deleteUserExecutable = () -> userService.deleteUserById(id);
+	@Test
+	void shouldThrowExceptionWhenTryingToDeleteNotExistingUser() {
+		//given
+		Long id = 1L;
+		when(userRepository.findById(id)).thenReturn(Optional.empty());
 
-    //then
-    assertThatThrownBy(deleteUserExecutable)
-        .isInstanceOf(UserNotFoundException.class)
-        .hasMessageContaining("User has not been found");
-    verify(userRepository, times(1)).findById(id);
-  }
+		//when
+		ThrowingCallable deleteUserExecutable = () ->
+			userService.deleteUserById(id);
 
-  @Test
-  void shouldThrowExceptionWhenGivenIdToDeleteIsNull() {
-    //given
-    Long id = null;
-    when(userRepository.findById(id)).thenThrow(IllegalArgumentException.class);
+		//then
+		assertThatThrownBy(deleteUserExecutable)
+			.isInstanceOf(UserNotFoundException.class)
+			.hasMessageContaining("User has not been found");
+		verify(userRepository, times(1)).findById(id);
+	}
 
-    //when
-    ThrowingCallable deleteUserExecutable = () -> userService.deleteUserById(id);
+	@Test
+	void shouldThrowExceptionWhenGivenIdToDeleteIsNull() {
+		//given
+		Long id = null;
+		when(userRepository.findById(id)).thenThrow(IllegalArgumentException.class);
 
-    //then
-    assertThatThrownBy(deleteUserExecutable)
-        .isInstanceOf(IllegalArgumentException.class);
-  }
+		//when
+		ThrowingCallable deleteUserExecutable = () ->
+			userService.deleteUserById(id);
+
+		//then
+		assertThatThrownBy(deleteUserExecutable)
+			.isInstanceOf(IllegalArgumentException.class);
+	}
 }

@@ -1,5 +1,18 @@
 package project.eepw.softwaretestingcrud.domain.post.data;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+import static project.eepw.softwaretestingcrud.domain.factory.PostFactory.makePost;
+import static project.eepw.softwaretestingcrud.domain.factory.UserFactory.makeUser;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -16,20 +29,6 @@ import project.eepw.softwaretestingcrud.domain.user.data.UserService;
 import project.eepw.softwaretestingcrud.domain.user.entity.User;
 import project.eepw.softwaretestingcrud.infrastructure.exception.PostNotFoundException;
 import project.eepw.softwaretestingcrud.infrastructure.exception.UserNotFoundException;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
-import static project.eepw.softwaretestingcrud.domain.factory.PostFactory.makePost;
-import static project.eepw.softwaretestingcrud.domain.factory.UserFactory.makeUser;
 
 @ExtendWith(MockitoExtension.class)
 class PostServiceTest {

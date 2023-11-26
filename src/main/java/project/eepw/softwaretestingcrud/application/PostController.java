@@ -1,5 +1,6 @@
 package project.eepw.softwaretestingcrud.application;
 
+import java.util.Collection;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -16,8 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import project.eepw.softwaretestingcrud.domain.post.data.PostService;
 import project.eepw.softwaretestingcrud.domain.post.dto.PostCreationDTO;
 import project.eepw.softwaretestingcrud.domain.post.dto.PostDTO;
-
-import java.util.Collection;
 
 @RestController
 @RequiredArgsConstructor
