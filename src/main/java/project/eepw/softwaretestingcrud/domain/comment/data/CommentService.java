@@ -1,5 +1,8 @@
 package project.eepw.softwaretestingcrud.domain.comment.data;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,10 +16,7 @@ import project.eepw.softwaretestingcrud.domain.post.data.PostService;
 import project.eepw.softwaretestingcrud.domain.post.entity.Post;
 import project.eepw.softwaretestingcrud.domain.user.data.UserService;
 import project.eepw.softwaretestingcrud.domain.user.entity.User;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
+import project.eepw.softwaretestingcrud.infrastructure.exception.CommentNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -44,12 +44,10 @@ public class CommentService {
 
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public Comment saveNewCommentToPost(
-		CommentCreationDTO commentCreationDTO,
-		Long postId,
-		Long userId
+		CommentCreationDTO commentCreationDTO
 	) {
-		User authorOfPost = userService.getUserById(userId);
-		Post commentedPost = postService.getPostById(postId);
+		User authorOfPost = userService.getUserById(commentCreationDTO.getUserId());
+		Post commentedPost = postService.getPostById(commentCreationDTO.getPostId());
 		Comment comment = Comment
 			.builder()
 			.post(commentedPost)
@@ -85,7 +83,7 @@ public class CommentService {
 		return commentRepository
 			.findById(commentId)
 			.orElseThrow(() ->
-				new IllegalStateException(
+				new CommentNotFoundException(
 					"Comment with provided id could not be found!"
 				)
 			);

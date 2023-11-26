@@ -16,6 +16,8 @@ public final class IntegrationTestConstants {
 	public static final String CREATE_POST_URL_WITHOUT_USER_ID =
 		GET_ALL_POSTS_URL + "/user/";
 
+	// comment endpoints
+	public static final String GET_ALL_COMMENTS_URL = "api/comment";
 	public static String createLocalURIWithGivenPortNumber(
 		int portNumber,
 		String wantedEndpoint
