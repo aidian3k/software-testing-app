@@ -1,6 +1,6 @@
 package project.eepw.softwaretestingcrud.domain.comment.entity;
 
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -30,25 +30,27 @@ import project.eepw.softwaretestingcrud.domain.user.entity.User;
 @ToString
 public class Comment {
 
-    @Id
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "comments_seq"
-    )
-    @SequenceGenerator(name = "comments_seq", allocationSize = 1)
-    private Long id;
+  @Id
+  @GeneratedValue(
+      strategy = GenerationType.SEQUENCE,
+      generator = "comments_seq"
+  )
+  @SequenceGenerator(name = "comments_seq", allocationSize = 1)
+  private Long id;
 
     @Size(max = 1024)
     @NotNull
     private String content;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @EqualsAndHashCode.Exclude
-    @ToString.Exclude
-    private User author;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @EqualsAndHashCode.Exclude
+  @ToString.Exclude
+  @JsonIgnore
+  private User author;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @EqualsAndHashCode.Exclude
-    @ToString.Exclude
-    private Post post;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @EqualsAndHashCode.Exclude
+  @ToString.Exclude
+  @JsonIgnore
+  private Post post;
 }
