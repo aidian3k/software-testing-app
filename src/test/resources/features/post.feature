@@ -1,7 +1,5 @@
+@initializePostUser
 Feature: Management of user's posts
-  Background:
-    Given In db there is a user with id 1, name "Adrian" and email "dolphin@wp.pl"
-
   Scenario Outline: As a user I want to create new posts
     When The user with id 1 tries to add new posts with valid content "<content>"
     Then The system should return post with content "<content>"

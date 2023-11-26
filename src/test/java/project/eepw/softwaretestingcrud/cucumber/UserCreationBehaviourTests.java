@@ -1,6 +1,5 @@
 package project.eepw.softwaretestingcrud.cucumber;
 
-import io.cucumber.java.After;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -400,47 +399,6 @@ public class UserCreationBehaviourTests {
 	public void theSystemCorrectlyDeletesTheUserWithIdFromDatabase() {
 		assertThat(lastVoidResponse.getStatusCode().value())
 			.isEqualTo(HttpStatus.OK.value());
-	}
-
-	@After
-	public void cleanDatabaseFromUsers() {
-		List<User> users = Arrays
-			.stream(
-				Objects.requireNonNull(
-					restTemplate.getForObject(
-						createLocalURIWithGivenPortNumber(port, GET_ALL_USERS_URL),
-						User[].class
-					)
-				)
-			)
-			.toList();
-
-		users.forEach(user -> {
-			restTemplate.delete(
-				createLocalURIWithGivenPortNumber(
-					port,
-					String.format(GET_ALL_USERS_URL + "/%d", user.getId())
-				)
-			);
-		});
-	}
-
-	@After("@checkForOkResponseSingleUser")
-	public void checkForOkResponseSingleUser() {
-		assertThat(lastUserResponse.getStatusCode().value())
-			.isEqualTo(HttpStatus.OK.value());
-	}
-
-	@After("@checkForOkResponseUserArray")
-	public void checkForOkResponseUserArray() {
-		assertThat(lastUserArrayResponse.getStatusCode().value())
-			.isEqualTo(HttpStatus.OK.value());
-	}
-
-	@After("@checkForBadResponseStatus")
-	public void checkForBadRequestResponse() {
-		assertThat(lastBadRequestResponse.getStatusCode().value())
-			.isEqualTo(HttpStatus.BAD_REQUEST.value());
 	}
 
 	@SuppressWarnings("unchecked")

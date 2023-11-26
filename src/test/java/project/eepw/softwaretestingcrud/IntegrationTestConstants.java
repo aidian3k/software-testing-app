@@ -19,7 +19,7 @@ public final class IntegrationTestConstants {
 	public static final String GET_POST_BY_ID_URL = "api/post/";
 
 	public static final String DELETE_POST_BY_ID_URL = "api/post/";
-  
+
 	// comment endpoints
 	public static final String GET_ALL_COMMENTS_URL = "api/comment";
 

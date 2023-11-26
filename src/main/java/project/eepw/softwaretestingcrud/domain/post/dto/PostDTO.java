@@ -16,6 +16,7 @@ import lombok.Setter;
 @Builder(toBuilder = true)
 @EqualsAndHashCode
 public class PostDTO {
+
 	@NotNull
 	private Long id;
 
