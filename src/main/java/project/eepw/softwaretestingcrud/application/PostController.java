@@ -2,15 +2,9 @@ package project.eepw.softwaretestingcrud.application;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import project.eepw.softwaretestingcrud.domain.post.data.PostService;
 import project.eepw.softwaretestingcrud.domain.post.dto.PostCreationDTO;
 import project.eepw.softwaretestingcrud.domain.post.dto.PostDTO;
@@ -47,6 +41,7 @@ class PostController {
 	}
 
 	@PostMapping("/user/{userId}")
+	@ResponseStatus(HttpStatus.CREATED)
 	public PostDTO createPost(
 		@RequestBody PostCreationDTO postCreationDTO,
 		@PathVariable Long userId
