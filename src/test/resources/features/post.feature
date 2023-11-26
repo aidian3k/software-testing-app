@@ -65,10 +65,10 @@ Feature: Management of user's posts
     When The user want to update that post
     Then The system should return an error that there is no such post
 
-#  Scenario: Updating post with invalid content length
-#    Given There is a post in database which user want to update
-#    When the user tries to update it with too long content
-#    Then The system should return an error that the post is too long
+  Scenario: Updating post with invalid content length
+    Given There is a post in database which user want to update
+    When The user tries to update it with too long content
+    Then The system should return an error that the post is too long
 
 
 

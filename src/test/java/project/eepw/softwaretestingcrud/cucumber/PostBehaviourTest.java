@@ -350,4 +350,48 @@ public class PostBehaviourTest {
                 });
     }
 
+    @Given("There is a post in database which user want to update")
+    public void thereIsAPostInDatabaseWhichUserWantToUpdate() {
+        PostCreationDTO post = PostCreationDTO.builder()
+                .content("content")
+                .build();
+
+        lastPostResponse = restTemplate.postForEntity(
+                createLocalURIWithGivenPortNumber(port, CREATE_POST_URL_WITHOUT_USER_ID + 1),
+                post,
+                PostDTO.class
+        );
+    }
+
+    @When("The user tries to update it with too long content")
+    public void theUserTriesToUpdateItWithTooLongContent() {
+        Long lastPostId = Objects.requireNonNull(lastPostResponse.getBody()).getId();
+
+        String content = IntStream.range(0, 1001)
+                .mapToObj(i -> String.valueOf((char) ('a' + i % 26)))
+                .collect(Collectors.joining());
+        PostDTO updatedPost = PostDTO.builder()
+                .id(lastPostId)
+                .content(content)
+                .build();
+        HttpEntity<PostDTO> httpEntity = new HttpEntity<>(updatedPost);
+
+        lastErrorResponse = () -> restTemplate.exchange(
+                createLocalURIWithGivenPortNumber(port, CREATE_POST_URL_WITHOUT_USER_ID + lastPostId),
+                HttpMethod.PUT,
+                httpEntity,
+                PostDTO.class
+        );
+    }
+
+    @Then("The system should return an error that the post is too long")
+    public void theSystemShouldReturnAnErrorThatThePostIsTooLong() {
+        assertThatThrownBy(lastErrorResponse)
+                .isInstanceOf(HttpClientErrorException.class)
+                .satisfies(e -> {
+                    HttpClientErrorException httpClientErrorException = (HttpClientErrorException) e;
+                    assertThat(httpClientErrorException.getStatusCode().value()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+                });
+    }
+
 }
