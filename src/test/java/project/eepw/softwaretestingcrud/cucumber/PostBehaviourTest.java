@@ -7,6 +7,7 @@ import io.cucumber.java.en.When;
 import org.assertj.core.api.ThrowableAssert;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -275,6 +276,78 @@ public class PostBehaviourTest {
     public void theSystemShouldReturnOKResponseCode() {
         assertThat(lastVoidResponse.getStatusCode().value())
                 .isEqualTo(HttpStatus.OK.value());
+    }
+
+    @Given("There is a post in database with content {string}")
+    public void thereIsAPostInDatabaseWithContent(String content) {
+        PostCreationDTO post = PostCreationDTO.builder()
+                .content(content)
+                .build();
+
+        lastPostResponse = restTemplate.postForEntity(
+                createLocalURIWithGivenPortNumber(port, CREATE_POST_URL_WITHOUT_USER_ID + 1),
+                post,
+                PostDTO.class
+        );
+    }
+
+    @When("The user tries to update the post with new content {string}")
+    public void theUserTriesToUpdateThePostWithNewContent(String newContent) {
+        Long lastPostId = Objects.requireNonNull(lastPostResponse.getBody()).getId();
+
+        PostDTO updatedPost = PostDTO.builder()
+                .id(lastPostId)
+                .content(newContent)
+                .build();
+        HttpEntity<PostDTO> httpEntity = new HttpEntity<>(updatedPost);
+
+        lastPostResponse = restTemplate.exchange(
+                createLocalURIWithGivenPortNumber(port, CREATE_POST_URL_WITHOUT_USER_ID + lastPostId),
+                HttpMethod.PUT,
+                httpEntity,
+                PostDTO.class
+        );
+    }
+
+    @Then("The user gets confirmation of update")
+    public void theUserGetsConfirmationOfUpdate() {
+        assertThat(lastPostResponse.getStatusCode().value())
+                .isEqualTo(HttpStatus.OK.value());
+    }
+
+    @Given("There is not a post in database")
+    public void thereIsNotAPostInDatabase() {
+        try {
+            restTemplate.delete(DELETE_POST_BY_ID_URL + 1);
+        } catch(Exception ignored) {
+
+        }
+    }
+
+    @When("The user want to update that post")
+    public void theUserWantToUpdateThatPost() {
+        PostDTO updatedPost = PostDTO.builder()
+                .id(1L)
+                .content("new content")
+                .build();
+        HttpEntity<PostDTO> httpEntity = new HttpEntity<>(updatedPost);
+
+        lastErrorResponse = () -> restTemplate.exchange(
+                createLocalURIWithGivenPortNumber(port, CREATE_POST_URL_WITHOUT_USER_ID + 1),
+                HttpMethod.PUT,
+                httpEntity,
+                PostDTO.class
+        );
+    }
+
+    @Then("The system should return an error that there is no such post")
+    public void theSystemShouldReturnAnErrorThatThereIsNoSuchPost() {
+        assertThatThrownBy(lastErrorResponse)
+                .isInstanceOf(HttpClientErrorException.class)
+                .satisfies(e -> {
+                    HttpClientErrorException httpClientErrorException = (HttpClientErrorException) e;
+                    assertThat(httpClientErrorException.getStatusCode().value()).isEqualTo(HttpStatus.NOT_FOUND.value());
+                });
     }
 
 }

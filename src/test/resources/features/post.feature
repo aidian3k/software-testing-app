@@ -51,16 +51,19 @@ Feature: Management of user's posts
       | 2 |
     Then The system should return OK response code
 
+  Scenario Outline: Updating existing post
+    Given There is a post in database with content "<content>"
+    When The user tries to update the post with new content "<newContent>"
+    Then The user gets confirmation of update
 
-#  Scenario: Updating existing post
-#    Given There is a post in database with id
-#    When The user tries to update the post with content "new content"
-#    Then The user gets confirmation of update
+    Examples:
+    | content | newContent |
+    | some-content | some-other-content |
 
-#  Scenario: Updating non existing post
-#    Given There is not a post in database
-#    When The user want to update that post
-#    Then The system should return an error that there is no such post
+  Scenario: Updating non existing post
+    Given There is not a post in database
+    When The user want to update that post
+    Then The system should return an error that there is no such post
 
 #  Scenario: Updating post with invalid content length
 #    Given There is a post in database which user want to update
