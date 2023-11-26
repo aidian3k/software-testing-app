@@ -23,8 +23,8 @@ Feature: Management of user's posts
     And The system should return 200 response code
 
   Scenario: As a user I want to get post by Id
-    Given In DB there is post with id 1 by user with id 1 with content "some-content"
-    When The user wants to find the post with id 1
+    Given In DB there is post by user with id 1 and content "some-content"
+    When The user wants to find the post by id
     Then The system should return requested post with content "some-content"
     And The system response should be 200
 

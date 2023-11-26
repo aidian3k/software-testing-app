@@ -147,8 +147,8 @@ public class PostBehaviourTest {
         assertThat(lastPostsResponse.getStatusCode().value()).isEqualTo(statusCode);
     }
 
-    @Given("In DB there is post with id {int} by user with id {int} with content {string}")
-    public void inDBThereIsPostWithIdByUserWithIdWithContent(int postId, int userId, String content) {
+    @Given("In DB there is post by user with id {int} and content {string}")
+    public void inDBThereIsPostByUserWithIdAndContent(int userId, String content) {
         PostCreationDTO post = PostCreationDTO.builder()
                 .content(content)
                 .build();
@@ -160,10 +160,12 @@ public class PostBehaviourTest {
         );
     }
 
-    @When("The user wants to find the post with id {int}")
-    public void theUserWithIdWantsToFindThePostWithId(int postId) {
+    @When("The user wants to find the post by id")
+    public void theUserWithIdWantsToFindThePostWithId() {
+        Long lastPostId = Objects.requireNonNull(lastPostResponse.getBody()).getId();
+
         lastPostResponse = restTemplate.getForEntity(
-                createLocalURIWithGivenPortNumber(port, GET_POST_BY_ID_URL + postId),
+                createLocalURIWithGivenPortNumber(port, GET_POST_BY_ID_URL + lastPostId),
                 PostDTO.class
         );
     }
