@@ -32,37 +32,40 @@ Feature: Management of user's posts
     Given In database there is no post with id 100
     When The user wants to get the data of post with id 100
     Then The system should return 404 not found to the user
-#
-#  Scenario: Delete post with non-existing id
-#    Given In datbase there is not a post with id 100
-#    When The user with id 1 wants to delete the post with id 100
-#    Then The system should throw an exception
-#    And The system should return 400 repsonse code to the user
-#
-#  Scenario: Deleting multiple posts
-#    Given There are 4 posts added to the user with id 1
-#    When The user with id 1 wants to delete all posts in the database
-#    Then User with id 1 should have 0 posts in database
-#    And The system should return 400 response code
-#
-#  Scenario: Updating existing post
-#    Given There is a post with id 1 added to the database and to user with id 1
-#    When The user with id 1 wants to update the post with id 1 with name changed
-#    Then The user with id 1 should have changed post to content changed
-#    And The system response to the user should be 200 code
-#
-#  Scenario: Updating non existing post
-#    Given There is not post in database with user id 1 and post id 100
-#    When The user with id 1 wants to update the post with id 100
-#    Then The system should throw an exception
-#    And The system should return 404 response code
-#
-#  Scenario: Updating post with invalid content length
-#    Given There is a post added to the user with id 1
-#    When The user with id 1 wants to update the post's with id 1 content to 256 characters content
-#    Then The system should throw an exception
-#    And The system should return 400 response code to the user
 
+  Scenario Outline: Delete post with non-existing id
+    Given In database there's no post with id <invalidId>
+    When The user wants to delete the post with "<invalidId>"
+    Then The system should return an error indicating the post was not found
+
+    Examples:
+    | invalidId |
+    | 1000 |
+    | 15 |
+    | -1 |
+
+  Scenario: Deleting multiple posts
+    Given In database there are two posts
+    When The user tries to delete posts with ids
+      | 1 |
+      | 2 |
+    Then The system should return OK response code
+
+
+#  Scenario: Updating existing post
+#    Given There is a post in database with id
+#    When The user tries to update the post with content "new content"
+#    Then The user gets confirmation of update
+
+#  Scenario: Updating non existing post
+#    Given There is not a post in database
+#    When The user want to update that post
+#    Then The system should return an error that there is no such post
+
+#  Scenario: Updating post with invalid content length
+#    Given There is a post in database which user want to update
+#    When the user tries to update it with too long content
+#    Then The system should return an error that the post is too long
 
 
 
