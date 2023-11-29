@@ -7,11 +7,15 @@ import io.cucumber.java.en.When;
 import org.assertj.core.api.ThrowableAssert;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import project.eepw.softwaretestingcrud.domain.post.dto.PostCreationDTO;
 import project.eepw.softwaretestingcrud.domain.post.dto.PostDTO;
+import project.eepw.softwaretestingcrud.domain.post.entity.Post;
 import project.eepw.softwaretestingcrud.domain.user.entity.User;
 
 import java.util.List;
@@ -34,6 +38,7 @@ public class PostBehaviourTest {
     private ResponseEntity<PostDTO> lastPostResponse;
     private ResponseEntity<PostDTO[]> lastPostsResponse;
     private ThrowableAssert.ThrowingCallable lastErrorResponse;
+    private ResponseEntity<Void> lastVoidResponse;
 
     @Given("In db there is a user with id {int}, name {string} and email {string}")
     public void inDbThereIsUserWithIdNameAndEmail(
@@ -203,4 +208,190 @@ public class PostBehaviourTest {
                     assertThat(httpClientErrorException.getStatusCode().value()).isEqualTo(statusCode);
                 });
     }
+
+
+    @Given("In database there's no post with id {int}")
+    public void inDatabaseThereSNoPostWithIdInvalidId(int postId) {
+    }
+
+    @When("The user wants to delete the post with {string}")
+    public void theUserWantsToDeleteThePostWith(String postIdAsString) {
+        try {
+            restTemplate.exchange(
+                    createLocalURIWithGivenPortNumber(
+                            port,
+                            GET_ALL_POSTS_URL + "/" + postIdAsString
+                    ),
+                    HttpMethod.DELETE,
+                    null,
+                    Void.class
+            );
+        } catch (HttpClientErrorException exception) {
+            lastVoidResponse = new ResponseEntity<>(exception.getStatusCode());
+        }
+    }
+
+    @Then("The system should return an error indicating the post was not found")
+    public void theSystemShouldReturnAnErrorIndicatingThePostWasNotFound() {
+        assertThat(lastVoidResponse.getStatusCode().value())
+                .isEqualTo(HttpStatus.NOT_FOUND.value());
+    }
+
+    @Given("In database there are two posts")
+    public void inDatabaseThereArePosts() {
+        List<PostCreationDTO> userPosts = List.of(
+                PostCreationDTO.builder().content("aaa").build(),
+                PostCreationDTO.builder().content("bbb").build()
+        );
+
+        for (PostCreationDTO post: userPosts) {
+            lastPostResponse = restTemplate.postForEntity(
+                    createLocalURIWithGivenPortNumber(port, CREATE_POST_URL_WITHOUT_USER_ID + 1),
+                    post,
+                    PostDTO.class
+            );
+        }
+    }
+
+    @When("The user tries to delete posts with ids")
+    public void theUserTriesToDeletePostsWithIds(List<Integer> postIds) {
+        for (int postId : postIds) {
+            try {
+                lastVoidResponse =  restTemplate.exchange(
+                        createLocalURIWithGivenPortNumber(
+                                port,
+                                GET_ALL_POSTS_URL + "/" + postId
+                        ),
+                        HttpMethod.DELETE,
+                        null,
+                        Void.class
+                );
+            } catch (HttpClientErrorException exception) {
+                lastVoidResponse = new ResponseEntity<>(exception.getStatusCode());
+            }
+        }
+    }
+
+    @Then("The system should return OK response code")
+    public void theSystemShouldReturnOKResponseCode() {
+        assertThat(lastVoidResponse.getStatusCode().value())
+                .isEqualTo(HttpStatus.OK.value());
+    }
+
+    @Given("There is a post in database with content {string}")
+    public void thereIsAPostInDatabaseWithContent(String content) {
+        PostCreationDTO post = PostCreationDTO.builder()
+                .content(content)
+                .build();
+
+        lastPostResponse = restTemplate.postForEntity(
+                createLocalURIWithGivenPortNumber(port, CREATE_POST_URL_WITHOUT_USER_ID + 1),
+                post,
+                PostDTO.class
+        );
+    }
+
+    @When("The user tries to update the post with new content {string}")
+    public void theUserTriesToUpdateThePostWithNewContent(String newContent) {
+        Long lastPostId = Objects.requireNonNull(lastPostResponse.getBody()).getId();
+
+        PostDTO updatedPost = PostDTO.builder()
+                .id(lastPostId)
+                .content(newContent)
+                .build();
+        HttpEntity<PostDTO> httpEntity = new HttpEntity<>(updatedPost);
+
+        lastPostResponse = restTemplate.exchange(
+                createLocalURIWithGivenPortNumber(port, CREATE_POST_URL_WITHOUT_USER_ID + lastPostId),
+                HttpMethod.PUT,
+                httpEntity,
+                PostDTO.class
+        );
+    }
+
+    @Then("The user gets confirmation of update")
+    public void theUserGetsConfirmationOfUpdate() {
+        assertThat(lastPostResponse.getStatusCode().value())
+                .isEqualTo(HttpStatus.OK.value());
+    }
+
+    @Given("There is not a post in database")
+    public void thereIsNotAPostInDatabase() {
+        try {
+            restTemplate.delete(DELETE_POST_BY_ID_URL + 1);
+        } catch(Exception ignored) {
+
+        }
+    }
+
+    @When("The user want to update that post")
+    public void theUserWantToUpdateThatPost() {
+        PostDTO updatedPost = PostDTO.builder()
+                .id(1L)
+                .content("new content")
+                .build();
+        HttpEntity<PostDTO> httpEntity = new HttpEntity<>(updatedPost);
+
+        lastErrorResponse = () -> restTemplate.exchange(
+                createLocalURIWithGivenPortNumber(port, CREATE_POST_URL_WITHOUT_USER_ID + 1),
+                HttpMethod.PUT,
+                httpEntity,
+                PostDTO.class
+        );
+    }
+
+    @Then("The system should return an error that there is no such post")
+    public void theSystemShouldReturnAnErrorThatThereIsNoSuchPost() {
+        assertThatThrownBy(lastErrorResponse)
+                .isInstanceOf(HttpClientErrorException.class)
+                .satisfies(e -> {
+                    HttpClientErrorException httpClientErrorException = (HttpClientErrorException) e;
+                    assertThat(httpClientErrorException.getStatusCode().value()).isEqualTo(HttpStatus.NOT_FOUND.value());
+                });
+    }
+
+    @Given("There is a post in database which user want to update")
+    public void thereIsAPostInDatabaseWhichUserWantToUpdate() {
+        PostCreationDTO post = PostCreationDTO.builder()
+                .content("content")
+                .build();
+
+        lastPostResponse = restTemplate.postForEntity(
+                createLocalURIWithGivenPortNumber(port, CREATE_POST_URL_WITHOUT_USER_ID + 1),
+                post,
+                PostDTO.class
+        );
+    }
+
+    @When("The user tries to update it with too long content")
+    public void theUserTriesToUpdateItWithTooLongContent() {
+        Long lastPostId = Objects.requireNonNull(lastPostResponse.getBody()).getId();
+
+        String content = IntStream.range(0, 1001)
+                .mapToObj(i -> String.valueOf((char) ('a' + i % 26)))
+                .collect(Collectors.joining());
+        PostDTO updatedPost = PostDTO.builder()
+                .id(lastPostId)
+                .content(content)
+                .build();
+        HttpEntity<PostDTO> httpEntity = new HttpEntity<>(updatedPost);
+
+        lastErrorResponse = () -> restTemplate.exchange(
+                createLocalURIWithGivenPortNumber(port, CREATE_POST_URL_WITHOUT_USER_ID + lastPostId),
+                HttpMethod.PUT,
+                httpEntity,
+                PostDTO.class
+        );
+    }
+
+    @Then("The system should return an error that the post is too long")
+    public void theSystemShouldReturnAnErrorThatThePostIsTooLong() {
+        assertThatThrownBy(lastErrorResponse)
+                .isInstanceOf(HttpClientErrorException.class)
+                .satisfies(e -> {
+                    HttpClientErrorException httpClientErrorException = (HttpClientErrorException) e;
+                    assertThat(httpClientErrorException.getStatusCode().value()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+                });
+    }
+
 }
